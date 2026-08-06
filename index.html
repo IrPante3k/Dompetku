@@ -835,7 +835,7 @@
       checkSavedSession();
     };
 
-    function checkSavedSession() {
+    async function checkSavedSession() {
       const savedUser = localStorage.getItem('dompetku_user');
       if (savedUser) {
         document.getElementById('displayUsername').innerText = savedUser;
@@ -843,10 +843,15 @@
         document.querySelectorAll('.app-component').forEach(el => el.style.display = 'flex');
         document.querySelector('.main-container').style.display = 'block';
         
-        loadMaster();
-        applyFilter();
-        loadRiwayat();
-        loadCalendar();
+        // Render UI lokal instan dulu
+        populateDropdowns();
+        renderCalendarGrid({});
+        
+        // Panggil server secara bertahap agar tidak terjadi penumpukan request di GAS
+        await loadMaster();
+        await applyFilter();
+        await loadRiwayat();
+        await loadCalendar();
       }
     }
 
@@ -1103,6 +1108,79 @@
 
         list.forEach(k => {
           if (k) katEl.innerHTML += `<option value="${k}">${k}</option>`;
+        });
+      }
+    }
+
+    function renderCharts(data) {
+      if (!data) return;
+      const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+      const isDark = currentTheme === 'dark';
+      const textColor = isDark ? '#f8f9fa' : '#212529';
+      const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+
+      // 1. Chart Donut Arus Kas (Pemasukan vs Pengeluaran)
+      const ctxDonut = document.getElementById('chartDonut');
+      if (ctxDonut) {
+        if (chartDonutInstance) chartDonutInstance.destroy();
+        chartDonutInstance = new Chart(ctxDonut, {
+          type: 'doughnut',
+          data: {
+            labels: ['Pemasukan', 'Pengeluaran'],
+            datasets: [{
+              data: [data.pemasukan || 0, data.pengeluaran || 0],
+              backgroundColor: ['#10b981', '#ef4444'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { color: textColor, font: { family: 'Plus Jakarta Sans', weight: '600' } }
+              }
+            }
+          }
+        });
+      }
+
+      // 2. Chart Bar Kategori Pengeluaran
+      const ctxKat = document.getElementById('chartKategori');
+      if (ctxKat) {
+        if (chartKategoriInstance) chartKategoriInstance.destroy();
+        const labels = (data.katLabels && data.katLabels.length > 0) ? data.katLabels : ['Belum Ada Data'];
+        const values = (data.katValues && data.katValues.length > 0) ? data.katValues : [0];
+
+        chartKategoriInstance = new Chart(ctxKat, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Pengeluaran (Rp)',
+              data: values,
+              backgroundColor: '#6366f1',
+              borderRadius: 8
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                ticks: { color: textColor, font: { family: 'Plus Jakarta Sans' } },
+                grid: { display: false }
+              },
+              y: {
+                ticks: { color: textColor, font: { family: 'Plus Jakarta Sans' } },
+                grid: { color: gridColor }
+              }
+            },
+            plugins: {
+              legend: { display: false }
+            }
+          }
         });
       }
     }
