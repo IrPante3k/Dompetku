@@ -1048,15 +1048,29 @@
       dompetIDs.forEach(id => {
         const el = document.getElementById(id);
         if(!el) return;
+        const currentVal = el.value;
         el.innerHTML = '<option value="">-- Pilih --</option>';
         if (dbMaster && dbMaster.dompet) {
-          dbMaster.dompet.forEach(d => el.innerHTML += `<option value="${d}">${d}</option>`);
+          dbMaster.dompet.forEach(d => {
+            const isSel = (d === currentVal) ? 'selected' : '';
+            el.innerHTML += `<option value="${d}" ${isSel}>${d}</option>`;
+          });
+        }
+        if (currentVal && el.querySelector(`option[value="${currentVal}"]`)) {
+          el.value = currentVal;
         }
       });
       const sp = document.getElementById('spProduk');
       if(sp && dbMaster && dbMaster.produk) {
+        const currentVal = sp.value;
         sp.innerHTML = '<option value="">-- Pilih --</option>';
-        dbMaster.produk.forEach(p => sp.innerHTML += `<option value="${p}">${p}</option>`);
+        dbMaster.produk.forEach(p => {
+          const isSel = (p === currentVal) ? 'selected' : '';
+          sp.innerHTML += `<option value="${p}" ${isSel}>${p}</option>`;
+        });
+        if (currentVal && sp.querySelector(`option[value="${currentVal}"]`)) {
+          sp.value = currentVal;
+        }
       }
     }
 
@@ -1069,6 +1083,7 @@
       const katEl = document.getElementById('txKategori');
       if (!katEl) return;
       
+      const currentSelectedKat = katEl.value;
       katEl.innerHTML = '<option value="">-- Pilih Kategori --</option>';
       
       if (!dbMaster) {
@@ -1081,16 +1096,14 @@
         };
       }
 
+      let list = [];
       if (tipe === 'Pemasukan') {
         if (boxJenis) boxJenis.style.display = 'none';
         if (jenisEl) {
           jenisEl.disabled = true;
           jenisEl.removeAttribute('required');
         }
-        const list = dbMaster.pemasukan || dbMaster.Pemasukan || [];
-        list.forEach(k => {
-          if (k) katEl.innerHTML += `<option value="${k}">${k}</option>`;
-        });
+        list = dbMaster.pemasukan || dbMaster.Pemasukan || [];
       } else {
         if (boxJenis) boxJenis.style.display = 'block';
         if (jenisEl) {
@@ -1099,16 +1112,22 @@
         }
         const jenis = (jenisEl ? jenisEl.value : 'Kebutuhan').toLowerCase();
         
-        let list = [];
         if (jenis.includes('kebutuhan')) {
           list = dbMaster.kebutuhan || dbMaster.Kebutuhan || [];
         } else {
           list = dbMaster.keinginan || dbMaster.Keinginan || [];
         }
+      }
 
-        list.forEach(k => {
-          if (k) katEl.innerHTML += `<option value="${k}">${k}</option>`;
-        });
+      list.forEach(k => {
+        if (k) {
+          const isSel = (k === currentSelectedKat) ? 'selected' : '';
+          katEl.innerHTML += `<option value="${k}" ${isSel}>${k}</option>`;
+        }
+      });
+
+      if (currentSelectedKat && katEl.querySelector(`option[value="${currentSelectedKat}"]`)) {
+        katEl.value = currentSelectedKat;
       }
     }
 
