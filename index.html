@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="id" data-bs-theme="light">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>DompetKu - Aplikasi Keuangan Mobile</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    // Inline script untuk mencegah Flash of Unstyled Content (FOUC)
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-bs-theme', savedTheme);
+    })();
+  </script>
+
+  <style>
+    :root {
+      --app-font: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --app-bg: #f8fafc;
+      --card-bg: #ffffff;
+      --card-border: rgba(226, 232, 240, 0.8);
+      --text-main: #0f172a;
+      --text-sub: #64748b;
+      --header-bg: rgba(255, 255, 255, 0.85);
+      --nav-bg: rgba(255, 255, 255, 0.9);
+      --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      --success-gradient: linear-gradient(135deg, #10b981 0%, #047857 100%);
+      --danger-gradient: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);
+      --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
+      --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
+      --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+
+    [data-bs-theme="dark"] {
+      --app-bg: #090d16;
+      --card-bg: #131b2e;
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --header-bg: rgba(19, 27, 46, 0.85);
+      --nav-bg: rgba(19, 27, 46, 0.9);
+      --primary-gradient: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+      --success-gradient: linear-gradient(135deg, #059669 0%, #065f46 100%);
+      --danger-gradient: linear-gradient(135deg, #e11d48 0%, #9f1239 100%);
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
+      --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    body {
+      background-color: var(--app-bg);
+      font-family: var(--app-font);
+      color: var(--text-main);
+      padding-top: 84px;
+      padding-bottom: 104px;
+      margin: 0;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* AUTHENTICATION SCREEN */
+    #authContainer {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--app-bg);
+      z-index: 2000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      transition: all 0.3s ease;
+    }
+    .auth-card {
+      background: var(--card-bg);
+      border-radius: 24px;
+      padding: 32px 24px;
+      box-shadow: var(--shadow-md);
+      width: 100%;
+      max-width: 400px;
+      border: 1px solid var(--card-border);
+      animation: fadeInUp 0.4s ease;
+    }
+
+    /* MAIN APP COMPONENTS */
+    .app-component { display: none; }
+
+    /* Header & Navigasi */
+    .top-header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--header-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 14px 20px;
+      box-shadow: var(--shadow-sm);
+      z-index: 1030;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      border-bottom-left-radius: 20px;
+      border-bottom-right-radius: 20px;
+    }
+
+    .theme-toggle-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--app-bg);
+      border: 1.5px solid var(--card-border);
+      color: var(--text-main);
+      font-size: 1.25rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .theme-toggle-btn:active {
+      transform: scale(0.9);
+    }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--nav-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: var(--shadow-glass);
+      z-index: 1030;
+      flex-wrap: nowrap;
+      justify-content: space-around;
+      padding: 10px 4px 16px 4px;
+      border-top: 1px solid var(--card-border);
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
+    }
+    .bottom-nav .nav-item { flex: 1; text-align: center; }
+    .bottom-nav .nav-link {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-sub);
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 4px 0;
+      width: 100%;
+      background: transparent !important;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border: none;
+      position: relative;
+    }
+    .bottom-nav .nav-link i {
+      font-size: 1.65rem;
+      margin-bottom: 2px;
+      transition: all 0.25s ease;
+      padding: 6px 18px;
+      border-radius: 22px;
+    }
+    .bottom-nav .nav-link.active {
+      color: #3b82f6;
+    }
+    .bottom-nav .nav-link.active i {
+      background: rgba(59, 130, 246, 0.18);
+      color: #3b82f6;
+      transform: translateY(-3px) scale(1.08);
+    }
+
+    .main-container { padding: 0 16px; max-width: 800px; margin: 0 auto; }
+    
+    /* Modern Mobile Cards */
+    .card {
+      background-color: var(--card-bg);
+      border-radius: 20px;
+      border: 1px solid var(--card-border);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 16px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease;
+    }
+
+    .summary-card {
+      color: white;
+      border-radius: 22px;
+      padding: 22px;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow-md);
+      transition: transform 0.2s ease;
+    }
+    .summary-card:active { transform: scale(0.99); }
+    .bg-gradient-primary { background: var(--primary-gradient); }
+    .bg-gradient-success { background: var(--success-gradient); }
+    .bg-gradient-danger { background: var(--danger-gradient); }
+
+    .summary-icon {
+      position: absolute; right: -6px; bottom: -14px;
+      font-size: 6rem; opacity: 0.2;
+      transform: rotate(-10deg);
+    }
+    .summary-title { font-size: 0.88rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9; }
+    .summary-amount { font-size: 1.75rem; font-weight: 800; margin-top: 6px; letter-spacing: -0.5px; }
+
+    .chart-box { position: relative; height: 230px; width: 100%; }
+
+    /* Calendar Grid Touch Friendly */
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+    .cal-header { text-align: center; font-weight: 700; font-size: 0.8rem; color: var(--text-sub); padding: 6px 0; }
+    .cal-day {
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 6px 4px;
+      min-height: 70px;
+      display: flex;
+      flex-direction: column;
+      background: var(--card-bg);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .cal-day:active { background: rgba(59, 130, 246, 0.15); transform: scale(0.96); }
+    .cal-day.empty { background: transparent; border: none; cursor: default; }
+    .cal-date { font-weight: 800; font-size: 0.95rem; margin-bottom: auto; color: var(--text-main); }
+    .cal-amt { font-size: 0.65rem; font-weight: 700; text-align: right; line-height: 1.15; }
+    .cal-in { color: #10b981; }
+    .cal-out { color: #f43f5e; }
+    .cal-day.today {
+      background: rgba(59, 130, 246, 0.12);
+      border: 2px solid #3b82f6;
+    }
+
+    /* Forms & Mobile Touch Controls (16px minimum font-size prevents auto-zoom on mobile focus) */
+    .form-control, .form-select, input[type="text"], input[type="password"], input[type="number"], input[type="date"], input[type="month"] {
+      border-radius: 14px;
+      padding: 14px 16px;
+      height: 52px;
+      border: 1.5px solid var(--card-border);
+      background-color: var(--app-bg);
+      color: var(--text-main);
+      font-size: 16px !important;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .form-control:focus, .form-select:focus {
+      background-color: var(--card-bg);
+      color: var(--text-main);
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.18);
+    }
+    .form-label { font-size: 0.92rem; font-weight: 700; color: var(--text-sub); margin-bottom: 6px; }
+    .required-label::after { content: " *"; color: #ef4444; }
+    .btn-main {
+      border-radius: 14px;
+      padding: 14px;
+      height: 54px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+      transition: all 0.2s ease;
+    }
+    .btn-main:active { transform: scale(0.98); }
+
+    /* Touch-friendly Input Group Addons */
+    .input-group > .btn {
+      border-top-right-radius: 14px !important;
+      border-bottom-right-radius: 14px !important;
+      padding: 0 20px;
+      font-size: 1.2rem;
+    }
+
+    /* Transaction List Items */
+    .tx-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .tx-item:last-child { border-bottom: none; }
+    .tx-icon {
+      width: 50px; height: 50px;
+      border-radius: 16px;
+      display: flex; justify-content: center; align-items: center;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+    .tx-icon.masuk { background: rgba(16, 185, 129, 0.18); color: #10b981; }
+    .tx-icon.keluar { background: rgba(244, 63, 94, 0.18); color: #f43f5e; }
+    .tx-details { flex-grow: 1; margin-left: 16px; min-width: 0; }
+    .tx-title { font-weight: 700; font-size: 1rem; margin-bottom: 2px; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tx-date { font-size: 0.82rem; color: var(--text-sub); }
+    .tx-amount { font-weight: 800; font-size: 1.05rem; text-align: right; flex-shrink: 0; margin-left: 8px; }
+    .tx-amount.masuk { color: #10b981; }
+    .tx-amount.keluar { color: #f43f5e; }
+
+    /* Toast Notification */
+    .toast-container { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 9999; width: 90%; max-width: 400px; }
+
+    /* Custom Currency Preview Badge */
+    .currency-preview {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #3b82f6;
+      margin-top: 4px;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .tab-pane {
+      animation: fadeInUp 0.25s ease-out;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ================= LAYAR LOGIN & REGISTER ================= -->
+  <div id="authContainer">
+    <div class="auth-card">
+      <div class="text-center mb-4">
+        <div class="bg-primary text-white rounded-circle d-inline-flex justify-content-center align-items-center mb-3 shadow" style="width: 56px; height: 56px;">
+          <i class="bi bi-wallet2 fs-3"></i>
+        </div>
+        <h4 class="fw-bold m-0" id="authTitle">Masuk ke DompetKu</h4>
+        <p class="text-secondary small mt-1" id="authSubtitle">Kelola keuangan Anda secara praktis</p>
+      </div>
+
+      <div id="authAlert" class="alert d-none small text-center rounded-3" role="alert"></div>
+
+      <form id="authForm" onsubmit="handleAuthSubmit(event)">
+        <div class="mb-3">
+          <label class="form-label">Username</label>
+          <input type="text" id="authUsername" class="form-control" placeholder="Masukkan username" required autocomplete="username">
+        </div>
+        <div class="mb-4">
+          <label class="form-label">Password</label>
+          <input type="password" id="authPassword" class="form-control" placeholder="Masukkan password" required autocomplete="current-password">
+        </div>
+        <button type="submit" id="btnAuthSubmit" class="btn btn-primary w-100 btn-main">Masuk</button>
+      </form>
+
+      <div class="text-center mt-4">
+        <small class="text-secondary" id="authToggleText">
+          Belum punya akun? <a href="javascript:void(0)" class="text-primary fw-bold text-decoration-none" onclick="toggleAuthMode(true)">Daftar Sekarang</a>
+        </small>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TOP HEADER ================= -->
+  <div class="top-header app-component">
+    <h5 class="fw-bold text-primary m-0 d-flex align-items-center">
+      <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center me-2 shadow-sm" style="width: 42px; height: 42px;">
+        <i class="bi bi-wallet2 fs-5"></i>
+      </div>
+      <span>DompetKu</span>
+    </h5>
+    <div class="d-flex align-items-center gap-2">
+      <!-- Dark Mode Toggle Button -->
+      <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Ubah Mode Tampilan">
+        <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
+      </button>
+
+      <div class="vr my-1 opacity-25"></div>
+
+      <span class="fw-bold small text-body-secondary me-1" id="displayUsername">User</span>
+      <button class="btn btn-outline-danger rounded-circle p-0 d-flex justify-content-center align-items-center" style="width: 40px; height: 40px;" title="Logout" onclick="logout()"><i class="bi bi-box-arrow-right fs-5"></i></button>
+    </div>
+  </div>
+
+  <!-- ================= BOTTOM NAVIGATION ================= -->
+  <ul class="nav nav-pills bottom-nav app-component" id="pills-tab" role="tablist">
+    <li class="nav-item" role="presentation"><a class="nav-link active" data-bs-toggle="pill" href="#tab-dashboard"><i class="bi bi-grid-fill"></i><span>Home</span></a></li>
+    <li class="nav-item" role="presentation"><a class="nav-link" data-bs-toggle="pill" href="#tab-transaksi"><i class="bi bi-receipt"></i><span>Harian</span></a></li>
+    <li class="nav-item" role="presentation"><a class="nav-link" data-bs-toggle="pill" href="#tab-sampingan"><i class="bi bi-shop"></i><span>Usaha</span></a></li>
+    <li class="nav-item" role="presentation"><a class="nav-link" data-bs-toggle="pill" href="#tab-transfer"><i class="bi bi-arrow-left-right"></i><span>Pindah</span></a></li>
+    <li class="nav-item" role="presentation"><a class="nav-link" data-bs-toggle="pill" href="#tab-hutang"><i class="bi bi-people-fill"></i><span>Utang</span></a></li>
+    <li class="nav-item" role="presentation"><a class="nav-link" data-bs-toggle="pill" href="#tab-goals"><i class="bi bi-bullseye"></i><span>Target</span></a></li>
+  </ul>
+
+  <!-- ================= MAIN CONTENT ================= -->
+  <div class="main-container app-component">
+    <div class="tab-content" id="pills-tabContent">
+
+      <!-- ================= TAB 1: HOME ================= -->
+      <div class="tab-pane fade show active" id="tab-dashboard">
+        <div class="card p-3 mb-3 mt-2">
+          <div class="row g-2 align-items-end">
+            <div class="col-9 col-sm-10">
+              <label class="form-label mb-1" style="font-size: 0.82rem;">Pilih Bulan Periode</label>
+              <input type="month" id="filterMonth" class="form-control form-control-sm px-2" onchange="applyFilter()">
+            </div>
+            <div class="col-3 col-sm-2">
+              <button class="btn btn-primary w-100 d-flex justify-content-center align-items-center" style="border-radius: 14px; height: 52px;" onclick="applyFilter()" title="Filter Data">
+                <i class="bi bi-search fs-5"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-card bg-gradient-primary">
+          <i class="bi bi-wallet2 summary-icon"></i>
+          <div class="summary-title">Total Saldo Periode</div>
+          <div class="summary-amount" id="dashSaldo">Rp 0</div>
+        </div>
+        
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <div class="summary-card bg-gradient-success p-3 mb-0">
+              <i class="bi bi-arrow-down-left-circle summary-icon" style="font-size: 4rem;"></i>
+              <div class="summary-title" style="font-size: 0.78rem;">Pemasukan</div>
+              <div class="summary-amount mt-1" style="font-size: 1.2rem;" id="dashPemasukan">Rp 0</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="summary-card bg-gradient-danger p-3 mb-0">
+              <i class="bi bi-arrow-up-right-circle summary-icon" style="font-size: 4rem;"></i>
+              <div class="summary-title" style="font-size: 0.78rem;">Pengeluaran</div>
+              <div class="summary-amount mt-1" style="font-size: 1.2rem;" id="dashPengeluaran">Rp 0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KALENDER -->
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <button class="btn btn-outline-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;" onclick="changeMonth(-1)"><i class="bi bi-chevron-left fs-5"></i></button>
+            <h6 class="fw-bold m-0 fs-6" id="calMonthYearTitle">Bulan Tahun</h6>
+            <button class="btn btn-outline-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;" onclick="changeMonth(1)"><i class="bi bi-chevron-right fs-5"></i></button>
+          </div>
+
+          <div class="cal-grid mb-1">
+            <div class="cal-header text-danger">Min</div>
+            <div class="cal-header">Sen</div>
+            <div class="cal-header">Sel</div>
+            <div class="cal-header">Rab</div>
+            <div class="cal-header">Kam</div>
+            <div class="cal-header">Jum</div>
+            <div class="cal-header text-primary">Sab</div>
+          </div>
+          <div class="cal-grid" id="calendarBody">
+            <div class="text-center py-4 text-secondary w-100" style="grid-column: span 7;">Memuat kalender...</div>
+          </div>
+        </div>
+
+        <div class="card p-3">
+          <h6 class="fw-bold mb-3 text-center">Arus Kas (Masuk vs Keluar)</h6>
+          <div class="chart-box"><canvas id="chartDonut"></canvas></div>
+        </div>
+
+        <div class="card p-3">
+          <h6 class="fw-bold mb-3 text-center">Distribusi Pengeluaran</h6>
+          <div class="chart-box"><canvas id="chartKategoriPie"></canvas></div>
+        </div>
+      </div>
+
+      <!-- ================= TAB 2: TRANSAKSI HARIAN ================= -->
+      <div class="tab-pane fade" id="tab-transaksi">
+        <div class="card p-4 mt-2">
+          <h5 class="fw-bold mb-4 text-center">Catat Transaksi</h5>
+          <form id="formTx" onsubmit="submitForm(event, 'simpanTransaksi', this)">
+            <div class="mb-3">
+              <label class="form-label required-label">Tanggal</label>
+              <input type="date" class="form-control" name="tanggal" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label required-label">Tipe Transaksi</label>
+              <select class="form-select" name="tipe" id="txTipe" onchange="renderKategoriOptions()" required>
+                <option value="Pengeluaran">Pengeluaran</option>
+                <option value="Pemasukan">Pemasukan</option>
+              </select>
+            </div>
+            <div class="mb-3" id="boxJenis">
+              <label class="form-label required-label">Jenis Pengeluaran</label>
+              <select class="form-select" name="jenis" id="txJenis" onchange="renderKategoriOptions()" required>
+                <option value="Kebutuhan">Kebutuhan</option>
+                <option value="Keinginan">Keinginan</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label required-label">Kategori</label>
+              <div class="input-group">
+                <select class="form-select" name="kategori" id="txKategori" required></select>
+                <button class="btn btn-outline-primary" type="button" onclick="openMasterModal('kategori')"><i class="bi bi-plus-lg"></i></button>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label required-label">Akun / Dompet</label>
+              <div class="input-group">
+                <select class="form-select" name="dompet" id="txDompet" required></select>
+                <button class="btn btn-outline-primary" type="button" onclick="openMasterModal('dompet')"><i class="bi bi-plus-lg"></i></button>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label required-label">Jumlah (Rp)</label>
+              <input type="number" inputmode="numeric" class="form-control form-control-lg fw-bold" name="jumlah" min="1" placeholder="0" oninput="updateCurrencyPreview(this, 'prevJumlahTx')" required>
+              <div class="currency-preview" id="prevJumlahTx">Rp 0</div>
+            </div>
+            <div class="mb-4">
+              <label class="form-label">Keterangan (Opsional)</label>
+              <input type="text" class="form-control" name="keterangan" placeholder="Contoh: Makan siang">
+            </div>
+            <button type="submit" class="btn btn-primary btn-main w-100">Simpan Transaksi</button>
+          </form>
+        </div>
+        
+        <div class="card p-4 mt-3">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold m-0 fs-6">Riwayat Terakhir</h6>
+            <button class="btn btn-outline-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;" type="button" onclick="loadRiwayat()"><i class="bi bi-arrow-clockwise fs-5"></i></button>
+          </div>
+          <div id="riwayatList">
+            <div class="text-center text-secondary small py-4">Memuat riwayat...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= TAB 3: USAHA SAMPINGAN ================= -->
+      <div class="tab-pane fade" id="tab-sampingan">
+        <div class="card p-4 mt-2">
+          <h5 class="fw-bold mb-4 text-center">Usaha Sampingan</h5>
+          <form id="formSampingan" onsubmit="submitForm(event, 'simpanSampingan', this)">
+            <div class="mb-3">
+              <label class="form-label required-label">Tanggal</label>
+              <input type="date" class="form-control" name="tanggal" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label required-label">Tipe</label>
+              <select class="form-select" name="tipe" required>
+                <option value="Pemasukan">Pemasukan (Penjualan)</option>
+                <option value="Pengeluaran">Pengeluaran (Modal/Alat)</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label required-label">Produk / Jasa</label>
+              <div class="input-group">
+                <select class="form-select" name="produk" id="spProduk" required></select>
+                <button class="btn btn-outline-primary" type="button" onclick="openMasterModal('produk')"><i class="bi bi-plus-lg"></i></button>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label required-label">Dompet Tujuan/Asal</label>
+              <select class="form-select" name="dompet" id="spDompet" required></select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label required-label">Jumlah (Rp)</label>
+              <input type="number" inputmode="numeric" class="form-control form-control-lg fw-bold" name="jumlah" min="1" placeholder="0" oninput="updateCurrencyPreview(this, 'prevJumlahSp')" required>
+              <div class="currency-preview" id="prevJumlahSp">Rp 0</div>
+            </div>
+            <div class="mb-4">
+              <label class="form-label">Keterangan (Opsional)</label>
+              <input type="text" class="form-control" name="keterangan" placeholder="Nama pembeli / catatan">
+            </div>
+            <button type="submit" class="btn btn-success btn-main w-100">Simpan Usaha</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- ================= TAB 4: TRANSFER ================= -->
+      <div class="tab-pane fade" id="tab-transfer">
+        <div class="card p-4 mt-2">
+          <h5 class="fw-bold mb-4 text-center">Transfer Dompet</h5>
+          <form id="formTransfer" onsubmit="submitForm(event, 'simpanTransfer', this)">
+            <div class="mb-3">
+              <label class="form-label required-label">Tanggal</label>
+              <input type="date" class="form-control" name="tanggal" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label required-label">Dari (Sumber)</label>
+              <select class="form-select" name="dariDompet" id="trDari" required></select>
+            </div>
+            <div class="mb-3 text-center text-secondary"><i class="bi bi-arrow-down-circle-fill fs-3 text-primary"></i></div>
+            <div class="mb-3">
+              <label class="form-label required-label">Ke (Tujuan)</label>
+              <select class="form-select" name="keDompet" id="trKe" required></select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label required-label">Nominal (Rp)</label>
+              <input type="number" inputmode="numeric" class="form-control form-control-lg fw-bold" name="nominal" min="1" placeholder="0" oninput="updateCurrencyPreview(this, 'prevNominalTr')" required>
+              <div class="currency-preview" id="prevNominalTr">Rp 0</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label required-label">Biaya Admin (Rp)</label>
+              <input type="number" inputmode="numeric" class="form-control" name="admin" min="0" value="0" oninput="updateCurrencyPreview(this, 'prevAdminTr')" required>
+              <div class="currency-preview" id="prevAdminTr">Rp 0</div>
+            </div>
+            <div class="mb-4">
+              <label class="form-label">Keterangan (Opsional)</label>
+              <input type="text" class="form-control" name="keterangan" placeholder="Contoh: Topup via M-Banking">
+            </div>
+            <button type="submit" class="btn btn-warning btn-main w-100 text-dark fw-bold">Transfer Sekarang</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- ================= TAB 5: UTANG / PIUTANG ================= -->
+      <div class="tab-pane fade" id="tab-hutang">
+        <div class="card p-4 mt-2">
+          <h5 class="fw-bold mb-4 text-center">Utang & Piutang</h5>
+          <form id="formHutang" onsubmit="submitForm(event, 'simpanHutang', this)">
+            <div class="mb-3">
+              <label class="form-label required-label">Nama Orang / Instansi</label>
+              <input type="text" class="form-control" name="namaPihak" placeholder="Siapa yang terlibat?" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label required-label">Jenis</label>
+              <select class="form-select" name="tipe" required>
+                <option value="Utang">Saya Meminjam (Utang)</option>
+                <option value="Piutang">Saya Meminjamkan (Piutang)</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label required-label">Total (Rp)</label>
+              <input type="number" inputmode="numeric" class="form-control form-control-lg fw-bold" name="total" min="1" placeholder="0" oninput="updateCurrencyPreview(this, 'prevTotalHt')" required>
+              <div class="currency-preview" id="prevTotalHt">Rp 0</div>
+            </div>
+            <div class="mb-4">
+              <label class="form-label">Keterangan (Opsional)</label>
+              <input type="text" class="form-control" name="keterangan" placeholder="Alasan pinjaman">
+            </div>
+            <button type="submit" class="btn btn-danger btn-main w-100">Simpan Catatan</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- ================= TAB 6: GOALS ================= -->
+      <div class="tab-pane fade" id="tab-goals">
+        <div class="card p-4 mt-2">
+          <h5 class="fw-bold mb-4 text-center">Target Masa Depan</h5>
+          <form id="formGoal" onsubmit="submitForm(event, 'simpanGoal', this)">
+            <div class="mb-3">
+              <label class="form-label required-label">Nama Target</label>
+              <input type="text" class="form-control" name="namaGoal" placeholder="Contoh: DP Mobil Baru" required>
+            </div>
+            <div class="mb-4">
+              <label class="form-label required-label">Target Dana (Rp)</label>
+              <input type="number" inputmode="numeric" class="form-control form-control-lg fw-bold" name="targetNominal" min="1" placeholder="0" oninput="updateCurrencyPreview(this, 'prevTargetGl')" required>
+              <div class="currency-preview" id="prevTargetGl">Rp 0</div>
+            </div>
+            <button type="submit" class="btn btn-info btn-main w-100 text-white fw-bold">Buat Target</button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL MASTER DATA -->
+  <div class="modal fade" id="modalMaster" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-title fw-bold" id="modalTitle">Tambah Data</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="modalTargetType">
+          <div class="mb-2">
+            <label class="form-label text-secondary" id="modalInputLabel">Nama Item Baru</label>
+            <input type="text" class="form-control form-control-lg" id="modalInputText" placeholder="Ketik di sini...">
+          </div>
+        </div>
+        <div class="modal-footer border-top-0 pt-0">
+          <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Batal</button>
+          <button type="button" class="btn btn-primary px-4 rounded-3" id="btnSimpanMaster" onclick="submitMasterBaru()">Simpan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DETAIL KALENDER -->
+  <div class="modal fade" id="modalCalDetail" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header border-bottom-0 bg-body-tertiary">
+          <h5 class="modal-title fw-bold" id="calDetailTitle">Rincian Tanggal</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-0" id="calDetailBody"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div class="toast-container">
+    <div id="liveToast" class="toast align-items-center text-white bg-success border-0 shadow-lg rounded-4" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex p-2">
+        <div class="toast-body fw-medium px-3 fs-6" id="toastMessage">Tersimpan.</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let dbMaster = { pemasukan: ['Gaji', 'Bonus', 'Investasi'], kebutuhan: ['Makan', 'Listrik', 'Air', 'Transport'], keinginan: ['Hiburan', 'Belanja', 'Nongkrong'], dompet: ['Cash', 'BCA', 'Mandiri', 'Gopay'], produk: ['Produk A', 'Jasa B'] };
+    let bsModal, bsModalCal, toastApp;
+    let chartDonutInstance = null, chartKategoriInstance = null;
+    let calYear = new Date().getFullYear();
+    let calMonth = new Date().getMonth() + 1;
+    let calendarCache = {};
+    let isRegisterMode = false;
+
+    window.onload = function() {
+      // 1. Inisialisasi Modal & Toast Bootstrap
+      bsModal = new bootstrap.Modal(document.getElementById('modalMaster'));
+      bsModalCal = new bootstrap.Modal(document.getElementById('modalCalDetail'));
+      toastApp = new bootstrap.Toast(document.getElementById('liveToast'), {delay: 3000});
+      
+      // 2. Set tanggal default hari ini untuk semua input date
+      const today = new Date().toISOString().split('T')[0];
+      document.querySelectorAll('input[type="date"]').forEach(e => {
+        e.value = today;
+      });
+      
+      // 3. Set bulan default pada input filterMonth
+      const currentMonthVal = `${calYear}-${String(calMonth).padStart(2, '0')}`;
+      document.getElementById('filterMonth').value = currentMonthVal;
+
+      // 4. Inisialisasi Ikon Tema
+      updateThemeIcon();
+    };
+
+    /* THEME SWITCHER LOGIC (DARK MODE) */
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-bs-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      updateThemeIcon();
+
+      // Refresh Charts to adjust font/grid colors in Dark Mode
+      if (calendarCache && Object.keys(calendarCache).length > 0) {
+        applyFilter();
+      }
+    }
+
+    function updateThemeIcon() {
+      const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+      const icon = document.getElementById('themeIcon');
+      if (currentTheme === 'dark') {
+        icon.className = 'bi bi-sun-fill text-warning';
+      } else {
+        icon.className = 'bi bi-moon-stars-fill text-primary';
+      }
+    }
+
+    /* CURRENCY PREVIEW HELPER */
+    function updateCurrencyPreview(input, previewId) {
+      const val = parseFloat(input.value);
+      const prevEl = document.getElementById(previewId);
+      if (prevEl) {
+        if (!isNaN(val) && val > 0) {
+          prevEl.innerText = "Rp " + Number(val).toLocaleString('id-ID');
+        } else {
+          prevEl.innerText = "Rp 0";
+        }
+      }
+    }
+
+    /* AUTHENTICATION LOGIC */
+    function toggleAuthMode(isRegister) {
+      isRegisterMode = isRegister;
+      const title = document.getElementById('authTitle');
+      const subtitle = document.getElementById('authSubtitle');
+      const btn = document.getElementById('btnAuthSubmit');
+      const toggleText = document.getElementById('authToggleText');
+      const alertBox = document.getElementById('authAlert');
+
+      alertBox.classList.add('d-none');
+
+      if (isRegister) {
+        title.innerText = 'Daftar Akun Baru';
+        subtitle.innerText = 'Buat akun untuk mengelola keuangan Anda';
+        btn.innerText = 'Daftar';
+        toggleText.innerHTML = 'Sudah punya akun? <a href="javascript:void(0)" class="text-primary fw-bold text-decoration-none" onclick="toggleAuthMode(false)">Login di sini</a>';
+      } else {
+        title.innerText = 'Masuk ke DompetKu';
+        subtitle.innerText = 'Kelola keuangan Anda secara praktis';
+        btn.innerText = 'Masuk';
+        toggleText.innerHTML = 'Belum punya akun? <a href="javascript:void(0)" class="text-primary fw-bold text-decoration-none" onclick="toggleAuthMode(true)">Daftar Sekarang</a>';
+      }
+    }
+
+    function handleAuthSubmit(e) {
+      e.preventDefault();
+      const user = document.getElementById('authUsername').value.trim();
+      const pass = document.getElementById('authPassword').value;
+      const btn = document.getElementById('btnAuthSubmit');
+      const alertBox = document.getElementById('authAlert');
+
+      if (!user || !pass) return;
+
+      btn.disabled = true;
+      btn.innerText = 'Memproses...';
+      alertBox.classList.add('d-none');
+
+      if (typeof google !== 'undefined') {
+        if (isRegisterMode) {
+          google.script.run
+            .withSuccessHandler(function(res) {
+              btn.disabled = false;
+              btn.innerText = 'Daftar';
+              if (res.success) {
+                showAlert('authAlert', 'success', res.message);
+                setTimeout(() => toggleAuthMode(false), 1200);
+              } else {
+                showAlert('authAlert', 'danger', res.message);
+              }
+            })
+            .withFailureHandler(function() {
+              btn.disabled = false;
+              btn.innerText = 'Daftar';
+              showAlert('authAlert', 'danger', 'Gagal terhubung ke backend.');
+            })
+            .registerUser(user, pass);
+        } else {
+          google.script.run
+            .withSuccessHandler(function(res) {
+              btn.disabled = false;
+              btn.innerText = 'Masuk';
+              if (res.success) {
+                showAlert('authAlert', 'success', res.message);
+                document.getElementById('displayUsername').innerText = user;
+                
+                setTimeout(() => {
+                  document.getElementById('authContainer').style.display = 'none';
+                  document.querySelectorAll('.app-component').forEach(el => el.style.display = 'flex');
+                  document.querySelector('.main-container').style.display = 'block';
+                  
+                  // Initialize App Data
+                  loadMaster();
+                  applyFilter();
+                  loadRiwayat();
+                  loadCalendar();
+                }, 800);
+              } else {
+                showAlert('authAlert', 'danger', res.message);
+              }
+            })
+            .withFailureHandler(function() {
+              btn.disabled = false;
+              btn.innerText = 'Masuk';
+              showAlert('authAlert', 'danger', 'Gagal terhubung ke backend.');
+            })
+            .checkLogin(user, pass);
+        }
+      } else {
+        // Fallback untuk pengujian lokal / Pratinjau Standalone
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.innerText = isRegisterMode ? 'Daftar' : 'Masuk';
+          document.getElementById('displayUsername').innerText = user || "Demo User";
+          document.getElementById('authContainer').style.display = 'none';
+          document.querySelectorAll('.app-component').forEach(el => el.style.display = 'flex');
+          document.querySelector('.main-container').style.display = 'block';
+          
+          showNotification('Login Pratinjau Lokal Berhasil!');
+          populateDropdowns();
+          loadLocalDummyData();
+        }, 600);
+      }
+    }
+
+    function showAlert(elementId, type, message) {
+      const el = document.getElementById(elementId);
+      el.className = `alert alert-${type} small text-center rounded-3`;
+      el.innerText = message;
+      el.classList.remove('d-none');
+    }
+
+    function logout() {
+      document.getElementById('authForm').reset();
+      document.getElementById('authContainer').style.display = 'flex';
+      document.querySelectorAll('.app-component').forEach(el => el.style.display = 'none');
+      toggleAuthMode(false);
+    }
+
+    /* MAIN APP FUNCTIONS */
+    function showNotification(msg, isError = false) {
+      const toastEl = document.getElementById('liveToast');
+      document.getElementById('toastMessage').innerText = msg;
+      if (isError) { toastEl.classList.replace('bg-success', 'bg-danger'); }
+      else { toastEl.classList.replace('bg-danger', 'bg-success'); }
+      toastApp.show();
+    }
+
+    function shortNum(num) {
+      if (num >= 1000000) return (num / 1000000).toFixed(1).replace('.0', '') + 'M';
+      if (num >= 1000) return (num / 1000).toFixed(1).replace('.0', '') + 'K';
+      return num;
+    }
+
+    function applyFilter() {
+      let monthVal = document.getElementById('filterMonth').value;
+      if (!monthVal) return;
+
+      let parts = monthVal.split('-');
+      let year = parseInt(parts[0], 10);
+      let month = parseInt(parts[1], 10);
+
+      let lastDayNum = new Date(year, month, 0).getDate();
+
+      let start = `${year}-${String(month).padStart(2, '0')}-01`;
+      let end = `${year}-${String(month).padStart(2, '0')}-${String(lastDayNum).padStart(2, '0')}`;
+
+      document.getElementById('dashSaldo').innerHTML = '...';
+
+      if (typeof google !== 'undefined') {
+        google.script.run.withSuccessHandler(function(data) {
+          const fmt = (num) => "Rp " + Number(num).toLocaleString('id-ID');
+          document.getElementById('dashSaldo').innerText = fmt(data.saldo);
+          document.getElementById('dashPemasukan').innerText = fmt(data.pemasukan);
+          document.getElementById('dashPengeluaran').innerText = fmt(data.pengeluaran);
+          renderCharts(data);
+        }).getDashboardData(start, end);
+      } else {
+        // Fallback data lokal
+        const mockData = {
+          saldo: 4850000,
+          pemasukan: 8500000,
+          pengeluaran: 3650000,
+          katLabels: ['Makan', 'Transport', 'Listrik', 'Belanja'],
+          katValues: [1800000, 450000, 600000, 800000]
+        };
+        const fmt = (num) => "Rp " + Number(num).toLocaleString('id-ID');
+        document.getElementById('dashSaldo').innerText = fmt(mockData.saldo);
+        document.getElementById('dashPemasukan').innerText = fmt(mockData.pemasukan);
+        document.getElementById('dashPengeluaran').innerText = fmt(mockData.pengeluaran);
+        renderCharts(mockData);
+      }
+    }
+
+    function renderCharts(data) {
+      if(chartDonutInstance) chartDonutInstance.destroy();
+      if(chartKategoriInstance) chartKategoriInstance.destroy();
+
+      const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+      const textColor = isDark ? '#94a3b8' : '#64748b';
+
+      const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 12,
+              color: textColor,
+              font: { size: 11, family: "'Plus Jakarta Sans', sans-serif", weight: '600' }
+            }
+          }
+        }
+      };
+
+      const ctxDonut = document.getElementById('chartDonut').getContext('2d');
+      chartDonutInstance = new Chart(ctxDonut, {
+        type: 'doughnut',
+        data: {
+          labels: ['Pemasukan', 'Pengeluaran'],
+          datasets: [{
+            data: [data.pemasukan, data.pengeluaran],
+            backgroundColor: ['#10b981', '#f43f5e'],
+            borderWidth: 0,
+            hoverOffset: 6
+          }]
+        },
+        options: { ...chartOptions, cutout: '72%' }
+      });
+
+      const colors = ['#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#64748b'];
+      const ctxPie = document.getElementById('chartKategoriPie').getContext('2d');
+      chartKategoriInstance = new Chart(ctxPie, {
+        type: 'pie',
+        data: {
+          labels: data.katLabels.length > 0 ? data.katLabels : ['Belum ada data'],
+          datasets: [{
+            data: data.katValues.length > 0 ? data.katValues : [1],
+            backgroundColor: data.katValues.length > 0 ? colors : ['#cbd5e1'],
+            borderWidth: 2,
+            borderColor: isDark ? '#131b2e' : '#ffffff'
+          }]
+        },
+        options: chartOptions
+      });
+    }
+
+    function changeMonth(dir) {
+      calMonth += dir;
+      if(calMonth > 12) { calMonth = 1; calYear++; }
+      if(calMonth < 1) { calMonth = 12; calYear--; }
+      loadCalendar();
+    }
+
+    function loadCalendar() {
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+      document.getElementById('calMonthYearTitle').innerText = `${monthNames[calMonth-1]} ${calYear}`;
+      document.getElementById('calendarBody').innerHTML = '<div class="text-center py-4 text-secondary w-100" style="grid-column: span 7;">Memuat kalender...</div>';
+      
+      if (typeof google !== 'undefined') {
+        google.script.run.withSuccessHandler(function(data) {
+          calendarCache = data; 
+          renderCalendarGrid(data);
+        }).getCalendarData(calYear, calMonth);
+      } else {
+        // Mock Calendar Data
+        const mockCal = {
+          5: { in: 5000000, out: 0, list: [{ tipe: 'Pemasukan', kategori: 'Gaji', dompet: 'BCA', ket: 'Gaji Bulanan', jumlah: 5000000 }] },
+          12: { in: 0, out: 150000, list: [{ tipe: 'Pengeluaran', kategori: 'Makan', dompet: 'Cash', ket: 'Makan Bersama', jumlah: 150000 }] },
+          18: { in: 0, out: 350000, list: [{ tipe: 'Pengeluaran', kategori: 'Belanja', dompet: 'Gopay', ket: 'Supermarket', jumlah: 350000 }] }
+        };
+        calendarCache = mockCal;
+        renderCalendarGrid(mockCal);
+      }
+    }
+
+    function renderCalendarGrid(data) {
+      const firstDay = new Date(calYear, calMonth - 1, 1).getDay(); 
+      const daysInMonth = new Date(calYear, calMonth, 0).getDate();
+      
+      let html = '';
+      for (let i = 0; i < firstDay; i++) {
+        html += `<div class="cal-day empty"></div>`;
+      }
+      
+      let todayDate = new Date();
+      let isCurrentMonth = (todayDate.getFullYear() === calYear && (todayDate.getMonth()+1) === calMonth);
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        let dayData = data[d] || { in: 0, out: 0, list: [] };
+        let isToday = isCurrentMonth && (todayDate.getDate() === d) ? 'today' : '';
+        let strIn = dayData.in > 0 ? `<div class="cal-amt cal-in">+${shortNum(dayData.in)}</div>` : '';
+        let strOut = dayData.out > 0 ? `<div class="cal-amt cal-out">-${shortNum(dayData.out)}</div>` : '';
+        
+        html += `
+          <div class="cal-day ${isToday}" onclick="openDayDetail(${d})">
+            <div class="cal-date">${d}</div>
+            <div class="mt-auto">${strIn}${strOut}</div>
+          </div>
+        `;
+      }
+      document.getElementById('calendarBody').innerHTML = html;
+    }
+
+    function openDayDetail(day) {
+      const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+      document.getElementById('calDetailTitle').innerText = `Rincian ${day} ${monthNames[calMonth-1]} ${calYear}`;
+      
+      let dayData = calendarCache[day];
+      let html = '';
+      if(!dayData || !dayData.list || dayData.list.length === 0) {
+        html = '<div class="p-4 text-center text-secondary">Tidak ada transaksi pada tanggal ini.</div>';
+      } else {
+        dayData.list.forEach(tx => {
+          let isMasuk = tx.tipe === 'Pemasukan';
+          let cIcon = isMasuk ? 'bi-arrow-down-left' : 'bi-arrow-up-right';
+          let cBg = isMasuk ? 'masuk' : 'keluar';
+          let fmt = "Rp " + Number(tx.jumlah).toLocaleString('id-ID');
+          
+          html += `
+            <div class="tx-item px-3">
+              <div class="tx-icon ${cBg}"><i class="bi ${cIcon}"></i></div>
+              <div class="tx-details">
+                <div class="tx-title">${tx.kategori}</div>
+                <div class="tx-date">${tx.dompet} &bull; ${tx.ket || '-'}</div>
+              </div>
+              <div class="tx-amount ${cBg}">${isMasuk ? '+' : '-'}${fmt}</div>
+            </div>`;
+        });
+      }
+      document.getElementById('calDetailBody').innerHTML = html;
+      bsModalCal.show();
+    }
+
+    function loadMaster() {
+      if (typeof google !== 'undefined') {
+        google.script.run.withSuccessHandler(function(data) {
+          dbMaster = data; populateDropdowns();
+        }).getMasterData();
+      } else {
+        populateDropdowns();
+      }
+    }
+
+    function populateDropdowns() {
+      renderKategoriOptions();
+      const dompetIDs = ['txDompet', 'spDompet', 'trDari', 'trKe'];
+      dompetIDs.forEach(id => {
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.innerHTML = '<option value="">-- Pilih --</option>';
+        dbMaster.dompet.forEach(d => el.innerHTML += `<option value="${d}">${d}</option>`);
+      });
+      const sp = document.getElementById('spProduk');
+      if(sp) {
+        sp.innerHTML = '<option value="">-- Pilih --</option>';
+        dbMaster.produk.forEach(p => sp.innerHTML += `<option value="${p}">${p}</option>`);
+      }
+    }
+
+    function renderKategoriOptions() {
+      const tipe = document.getElementById('txTipe').value;
+      const boxJenis = document.getElementById('boxJenis');
+      const katEl = document.getElementById('txKategori');
+      
+      katEl.innerHTML = '<option value="">-- Pilih Kategori --</option>';
+      if (tipe === 'Pemasukan') {
+        boxJenis.style.display = 'none';
+        dbMaster.pemasukan.forEach(k => katEl.innerHTML += `<option value="${k}">${k}</option>`);
+      } else {
+        boxJenis.style.display = 'block';
+        const jenis = document.getElementById('txJenis').value;
+        const list = (jenis === 'Kebutuhan') ? dbMaster.kebutuhan : dbMaster.keinginan;
+        list.forEach(k => katEl.innerHTML += `<option value="${k}">${k}</option>`);
+      }
+    }
+
+    function openMasterModal(type) {
+      document.getElementById('modalTargetType').value = type;
+      document.getElementById('modalInputText').value = '';
+      document.getElementById('modalTitle').innerText = 'Tambah ' + type.charAt(0).toUpperCase() + type.slice(1);
+      bsModal.show();
+    }
+
+    function submitMasterBaru() {
+      const type = document.getElementById('modalTargetType').value;
+      const val = document.getElementById('modalInputText').value.trim();
+      const btn = document.getElementById('btnSimpanMaster');
+      if (!val) { showNotification("Nama item tidak boleh kosong!", true); return; }
+
+      let colType = type;
+      if (type === 'kategori') {
+        const tipe = document.getElementById('txTipe').value;
+        colType = (tipe === 'Pemasukan') ? 'pemasukan' : document.getElementById('txJenis').value.toLowerCase();
+      }
+
+      btn.disabled = true; btn.innerText = 'Simpan...';
+      if (typeof google !== 'undefined') {
+        google.script.run.withSuccessHandler(function(res) {
+          btn.disabled = false; btn.innerText = 'Simpan';
+          bsModal.hide();
+          if(res.status === 'success') { showNotification(res.message); loadMaster(); }
+          else { showNotification(res.message, true); }
+        }).tambahMasterItem(colType, val);
+      } else {
+        setTimeout(() => {
+          btn.disabled = false; btn.innerText = 'Simpan';
+          bsModal.hide();
+          if (colType === 'pemasukan') dbMaster.pemasukan.push(val);
+          else if (colType === 'kebutuhan') dbMaster.kebutuhan.push(val);
+          else if (colType === 'keinginan') dbMaster.keinginan.push(val);
+          else if (colType === 'dompet') dbMaster.dompet.push(val);
+          else if (colType === 'produk') dbMaster.produk.push(val);
+          showNotification('Item master berhasil ditambahkan (Lokal)!');
+          populateDropdowns();
+        }, 500);
+      }
+    }
+
+    function submitForm(e, funcName, formEl) {
+      e.preventDefault();
+      if (!formEl.checkValidity()) { formEl.reportValidity(); return; }
+
+      const btn = formEl.querySelector('button[type="submit"]');
+      const originalText = btn.innerText; btn.disabled = true; btn.innerText = 'Menyimpan...';
+      const formData = {}; new FormData(formEl).forEach((val, key) => formData[key] = val);
+
+      if (typeof google !== 'undefined') {
+        google.script.run.withSuccessHandler(function(res) {
+          btn.disabled = false; btn.innerText = originalText;
+          if (res.status === 'success') {
+            showNotification(res.message); formEl.reset();
+            resetCurrencyPreviews();
+            const today = new Date().toISOString().split('T')[0];
+            formEl.querySelectorAll('input[type="date"]').forEach(i => i.value = today);
+            applyFilter(); loadRiwayat(); 
+            loadCalendar();
+          } else { showNotification(res.message, true); }
+        })[funcName](formData);
+      } else {
+        setTimeout(() => {
+          btn.disabled = false; btn.innerText = originalText;
+          showNotification('Data berhasil disimpan (Pratinjau Lokal)!');
+          formEl.reset();
+          resetCurrencyPreviews();
+          const today = new Date().toISOString().split('T')[0];
+          formEl.querySelectorAll('input[type="date"]').forEach(i => i.value = today);
+          applyFilter(); loadRiwayat(); loadCalendar();
+        }, 600);
+      }
+    }
+
+    function resetCurrencyPreviews() {
+      document.querySelectorAll('.currency-preview').forEach(el => el.innerText = 'Rp 0');
+    }
+
+    function loadRiwayat() {
+      const listEl = document.getElementById('riwayatList');
+      if (typeof google !== 'undefined') {
+        listEl.innerHTML = '<div class="text-center text-secondary py-4">Memuat riwayat...</div>';
+        google.script.run.withSuccessHandler(function(data) {
+          renderRiwayatList(data);
+        }).getRiwayatTransaksi();
+      } else {
+        // Mock Riwayat
+        const mockRiwayat = [
+          { tipe: 'Pemasukan', kategori: 'Gaji', tanggal: '2026-08-01', dompet: 'BCA', jumlah: 5000000 },
+          { tipe: 'Pengeluaran', kategori: 'Makan', tanggal: '2026-08-02', dompet: 'Cash', jumlah: 150000 },
+          { tipe: 'Pengeluaran', kategori: 'Belanja', tanggal: '2026-08-04', dompet: 'Gopay', jumlah: 350000 }
+        ];
+        renderRiwayatList(mockRiwayat);
+      }
+    }
+
+    function renderRiwayatList(data) {
+      const listEl = document.getElementById('riwayatList');
+      listEl.innerHTML = '';
+      if (!data || data.length === 0) {
+        listEl.innerHTML = '<div class="text-center text-secondary py-4">Belum ada transaksi tersimpan.</div>';
+        return;
+      }
+      data.forEach(tx => {
+        const isMasuk = tx.tipe === 'Pemasukan';
+        const iconClass = isMasuk ? 'bi-arrow-down-left' : 'bi-arrow-up-right';
+        const amountClass = isMasuk ? 'masuk' : 'keluar';
+        const sign = isMasuk ? '+' : '-';
+        const fmtAmt = "Rp " + Number(tx.jumlah).toLocaleString('id-ID');
+
+        listEl.innerHTML += `
+          <div class="tx-item">
+            <div class="tx-icon ${amountClass}"><i class="bi ${iconClass}"></i></div>
+            <div class="tx-details">
+              <div class="tx-title">${tx.kategori}</div>
+              <div class="tx-date"><i class="bi bi-calendar3 me-1"></i> ${tx.tanggal} &bull; ${tx.dompet}</div>
+            </div>
+            <div class="tx-amount ${amountClass}">${sign}${fmtAmt}</div>
+          </div>
+        `;
+      });
+    }
+
+    function loadLocalDummyData() {
+      applyFilter();
+      loadCalendar();
+      loadRiwayat();
+    }
+  </script>
+</body>
+</html>
