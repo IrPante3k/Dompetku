@@ -1045,6 +1045,11 @@
       let year = parseInt(parts[0], 10);
       let month = parseInt(parts[1], 10);
 
+      // Sinkronkan variabel bulan dan tahun kalender dengan filter bulan
+      calYear = year;
+      calMonth = month;
+      loadCalendar();
+
       let lastDayNum = new Date(year, month, 0).getDate();
 
       let start = `${year}-${String(month).padStart(2, '0')}-01`;
@@ -1083,25 +1088,44 @@
     async function loadCalendar() {
       const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
       document.getElementById('calMonthYearTitle').innerText = `${monthNames[calMonth-1]} ${calYear}`;
-      document.getElementById('calendarBody').innerHTML = '<div class="text-center py-4 text-secondary w-100" style="grid-column: span 7;">Memuat kalender...</div>';
       
       try {
         const data = await callBackend('getCalendarData', { year: calYear, month: calMonth });
-        if (data) {
-          calendarCache = data; 
-          renderCalendarGrid(data);
-        } else {
-          const mockCal = {
-            5: { in: 5000000, out: 0, list: [{ tipe: 'Pemasukan', kategori: 'Gaji', dompet: 'BCA', ket: 'Gaji Bulanan', jumlah: 5000000 }] },
-            12: { in: 0, out: 150000, list: [{ tipe: 'Pengeluaran', kategori: 'Makan', dompet: 'Cash', ket: 'Makan Bersama', jumlah: 150000 }] },
-            18: { in: 0, out: 350000, list: [{ tipe: 'Pengeluaran', kategori: 'Belanja', dompet: 'Gopay', ket: 'Supermarket', jumlah: 350000 }] }
-          };
-          calendarCache = mockCal;
-          renderCalendarGrid(mockCal);
-        }
+        calendarCache = data || {};
+        renderCalendarGrid(calendarCache);
       } catch (e) {
-        console.error(e);
+        console.error("Error loadCalendar:", e);
+        renderCalendarGrid({});
       }
+    }
+
+    function renderCalendarGrid(data) {
+      if (!data) data = {};
+      const firstDay = new Date(calYear, calMonth - 1, 1).getDay(); 
+      const daysInMonth = new Date(calYear, calMonth, 0).getDate();
+      
+      let html = '';
+      for (let i = 0; i < firstDay; i++) {
+        html += `<div class="cal-day empty"></div>`;
+      }
+      
+      let todayDate = new Date();
+      let isCurrentMonth = (todayDate.getFullYear() === calYear && (todayDate.getMonth()+1) === calMonth);
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        let dayData = data[d] || data[String(d)] || { in: 0, out: 0, list: [] };
+        let isToday = isCurrentMonth && (todayDate.getDate() === d) ? 'today' : '';
+        let strIn = (dayData.in && dayData.in > 0) ? `<div class="cal-amt cal-in">+${shortNum(dayData.in)}</div>` : '';
+        let strOut = (dayData.out && dayData.out > 0) ? `<div class="cal-amt cal-out">-${shortNum(dayData.out)}</div>` : '';
+        
+        html += `
+          <div class="cal-day ${isToday}" onclick="openDayDetail(${d})">
+            <div class="cal-date">${d}</div>
+            <div class="mt-auto">${strIn}${strOut}</div>
+          </div>
+        `;
+      }
+      document.getElementById('calendarBody').innerHTML = html;
     }
 
     async function loadMaster() {
