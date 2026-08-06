@@ -1037,6 +1037,68 @@
       return num;
     }
 
+    function populateDropdowns() {
+      renderKategoriOptions();
+      const dompetIDs = ['txDompet', 'spDompet', 'trDari', 'trKe'];
+      dompetIDs.forEach(id => {
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.innerHTML = '<option value="">-- Pilih --</option>';
+        if (dbMaster && dbMaster.dompet) {
+          dbMaster.dompet.forEach(d => el.innerHTML += `<option value="${d}">${d}</option>`);
+        }
+      });
+      const sp = document.getElementById('spProduk');
+      if(sp && dbMaster && dbMaster.produk) {
+        sp.innerHTML = '<option value="">-- Pilih --</option>';
+        dbMaster.produk.forEach(p => sp.innerHTML += `<option value="${p}">${p}</option>`);
+      }
+    }
+
+    function renderKategoriOptions() {
+      const tipeEl = document.getElementById('txTipe');
+      if (!tipeEl) return;
+      const tipe = tipeEl.value;
+      const boxJenis = document.getElementById('boxJenis');
+      const katEl = document.getElementById('txKategori');
+      if (!katEl) return;
+      
+      katEl.innerHTML = '<option value="">-- Pilih Kategori --</option>';
+      
+      if (!dbMaster) {
+        dbMaster = {
+          pemasukan: ['Gaji', 'Bonus', 'Investasi'],
+          kebutuhan: ['Makan', 'Listrik', 'Air', 'Transport'],
+          keinginan: ['Hiburan', 'Belanja', 'Nongkrong'],
+          dompet: ['Cash', 'BCA', 'Mandiri', 'Gopay'],
+          produk: ['Produk A', 'Jasa B']
+        };
+      }
+
+      if (tipe === 'Pemasukan') {
+        if (boxJenis) boxJenis.style.display = 'none';
+        const list = dbMaster.pemasukan || dbMaster.Pemasukan || [];
+        list.forEach(k => {
+          if (k) katEl.innerHTML += `<option value="${k}">${k}</option>`;
+        });
+      } else {
+        if (boxJenis) boxJenis.style.display = 'block';
+        const jenisEl = document.getElementById('txJenis');
+        const jenis = (jenisEl ? jenisEl.value : 'Kebutuhan').toLowerCase();
+        
+        let list = [];
+        if (jenis.includes('kebutuhan')) {
+          list = dbMaster.kebutuhan || dbMaster.Kebutuhan || [];
+        } else {
+          list = dbMaster.keinginan || dbMaster.Keinginan || [];
+        }
+
+        list.forEach(k => {
+          if (k) katEl.innerHTML += `<option value="${k}">${k}</option>`;
+        });
+      }
+    }
+
     async function applyFilter() {
       let monthVal = document.getElementById('filterMonth').value;
       if (!monthVal) return;
