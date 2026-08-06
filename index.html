@@ -841,7 +841,10 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // MASUKKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI SINI
-    let GAS_API_URL = localStorage.getItem('dompetku_gas_url') || "https://script.google.com/macros/s/AKfycbxd8rp0OVqmV18BtsO6WAUiOXaXCawlCLLXL6OrVh_gix8sO9vULkDuDAqyWvPAA5JS/exec";
+    let DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxd8rp0OVqmV18BtsO6WAUiOXaXCawlCLLXL6OrVh_gix8sO9vULkDuDAqyWvPAA5JS/exec";
+    let GAS_API_URL = DEFAULT_GAS_URL;
+    // Hapus sisa URL lama dari localStorage jika ada
+    try { localStorage.removeItem('dompetku_gas_url'); } catch(e){}
 
     async function callBackend(action, payload = {}, retries = 2) {
       // 1. Jika GAS_API_URL terisi (di-host di Vercel atau Standalone Browser)
