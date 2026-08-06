@@ -1060,6 +1060,7 @@
       if (!tipeEl) return;
       const tipe = tipeEl.value;
       const boxJenis = document.getElementById('boxJenis');
+      const jenisEl = document.getElementById('txJenis');
       const katEl = document.getElementById('txKategori');
       if (!katEl) return;
       
@@ -1077,13 +1078,20 @@
 
       if (tipe === 'Pemasukan') {
         if (boxJenis) boxJenis.style.display = 'none';
+        if (jenisEl) {
+          jenisEl.disabled = true;
+          jenisEl.removeAttribute('required');
+        }
         const list = dbMaster.pemasukan || dbMaster.Pemasukan || [];
         list.forEach(k => {
           if (k) katEl.innerHTML += `<option value="${k}">${k}</option>`;
         });
       } else {
         if (boxJenis) boxJenis.style.display = 'block';
-        const jenisEl = document.getElementById('txJenis');
+        if (jenisEl) {
+          jenisEl.disabled = false;
+          jenisEl.setAttribute('required', 'required');
+        }
         const jenis = (jenisEl ? jenisEl.value : 'Kebutuhan').toLowerCase();
         
         let list = [];
