@@ -762,7 +762,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // MASUKKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI SINI
-    let GAS_API_URL = localStorage.getItem('dompetku_gas_url') || "https://script.google.com/macros/s/AKfycbxpXe3ZuwuSJ9tlH5LYCdnaYuUKXVZSBDLeXUI8hxO7WGWTjDO7laaRXAQyy41GMroZ/exec";
+    let GAS_API_URL = localStorage.getItem('dompetku_gas_url') || "https://script.google.com/macros/s/AKfycbyGfG12aLAUt6ahycWdpy2_h8iCIqfXLZn2DoABsMrdNFW3KjMb_8MUqmQ5wACqIju1/exec";
 
     async function callBackend(action, payload = {}, retries = 2) {
       // 1. Jika GAS_API_URL terisi (di-host di Vercel atau Standalone Browser)
@@ -853,16 +853,43 @@
         document.querySelectorAll('.app-component').forEach(el => el.style.display = 'flex');
         document.querySelector('.main-container').style.display = 'block';
         
-        // Render UI lokal instan dulu
+        // 1. Render data lokal dari cache seketika (0 ms)
         populateDropdowns();
-        renderCalendarGrid({});
+        renderCalendarGrid(getCache('dompetku_cache_cal') || {});
         
-        // Panggil server secara bertahap agar tidak terjadi penumpukan request di GAS
-        await loadMaster();
-        await applyFilter();
-        await loadRiwayat();
-        await loadCalendar();
+        const cachedDash = getCache('dompetku_cache_dash');
+        if (cachedDash) {
+          const fmt = (num) => "Rp " + Number(num).toLocaleString('id-ID');
+          document.getElementById('dashSaldo').innerText = fmt(cachedDash.saldo || 0);
+          document.getElementById('dashPemasukan').innerText = fmt(cachedDash.pemasukan || 0);
+          document.getElementById('dashPengeluaran').innerText = fmt(cachedDash.pengeluaran || 0);
+          renderCharts(cachedDash);
+        } else {
+          renderCalendarGrid({});
+        }
+
+        const cachedRiwayat = getCache('dompetku_cache_riwayat');
+        if (cachedRiwayat) {
+          renderRiwayatList(cachedRiwayat);
+        }
+
+        // 2. Lakukan sinkronisasi ke server secara background tanpa memblokir UI
+        loadMaster();
+        applyFilter();
+        loadRiwayat();
+        loadCalendar();
       }
+    }
+
+    function setCache(key, value) {
+      try { localStorage.setItem(key, JSON.stringify(value)); } catch(e){}
+    }
+
+    function getCache(key) {
+      try {
+        const item = localStorage.getItem(key);
+        return item ? JSON.parse(item) : null;
+      } catch(e) { return null; }
     }
 
     /* FULLSCREEN TOGGLE HELPER */
@@ -1028,7 +1055,6 @@
     }
 
     function logout() {
-      // Hapus Sesi Tersimpan dari LocalStorage
       localStorage.removeItem('dompetku_user');
       document.getElementById('authForm').reset();
       document.getElementById('authContainer').style.display = 'flex';
@@ -1098,11 +1124,11 @@
       
       if (!dbMaster) {
         dbMaster = {
-          pemasukan: ['Gaji', 'Bonus', 'Investasi'],
-          kebutuhan: ['Makan', 'Listrik', 'Air', 'Transport'],
-          keinginan: ['Hiburan', 'Belanja', 'Nongkrong'],
-          dompet: ['Cash', 'BCA', 'Mandiri', 'Gopay'],
-          produk: ['Produk A', 'Jasa B']
+          pemasukan: ['Gaji', 'Bonus', 'Investasi', 'Lainnya'],
+          kebutuhan: ['Makan/Minum', 'Belanja Bulanan', 'Listrik/Air', 'Transportasi', 'Kesehatan'],
+          keinginan: ['Hiburan', 'Hobi', 'Jalan-jalan', 'Shopping'],
+          dompet: ['Tunai', 'BCA', 'Mandiri', 'GoPay', 'OVO', 'Dana'],
+          produk: ['Produk A', 'Jasa Service', 'Reseller Item']
         };
       }
 
@@ -1129,15 +1155,20 @@
         }
       }
 
+      let matchFound = false;
       list.forEach(k => {
-        if (k) {
-          const isSel = (k === currentSelectedKat) ? 'selected' : '';
-          katEl.innerHTML += `<option value="${k}" ${isSel}>${k}</option>`;
+        if (k && k.toString().trim() !== "") {
+          const itemStr = k.toString().trim();
+          const isSel = (itemStr === currentSelectedKat) ? 'selected' : '';
+          if (isSel) matchFound = true;
+          katEl.innerHTML += `<option value="${itemStr}" ${isSel}>${itemStr}</option>`;
         }
       });
 
-      if (currentSelectedKat && katEl.querySelector(`option[value="${currentSelectedKat}"]`)) {
+      if (matchFound && currentSelectedKat) {
         katEl.value = currentSelectedKat;
+      } else {
+        katEl.value = "";
       }
     }
 
@@ -1222,7 +1253,6 @@
       let year = parseInt(parts[0], 10);
       let month = parseInt(parts[1], 10);
 
-      // Sinkronkan variabel bulan dan tahun kalender dengan filter bulan
       calYear = year;
       calMonth = month;
       loadCalendar();
@@ -1232,30 +1262,15 @@
       let start = `${year}-${String(month).padStart(2, '0')}-01`;
       let end = `${year}-${String(month).padStart(2, '0')}-${String(lastDayNum).padStart(2, '0')}`;
 
-      document.getElementById('dashSaldo').innerHTML = '...';
-
       try {
         const data = await callBackend('getDashboardData', { startDateStr: start, endDateStr: end });
         if (data) {
+          setCache('dompetku_cache_dash', data);
           const fmt = (num) => "Rp " + Number(num).toLocaleString('id-ID');
           document.getElementById('dashSaldo').innerText = fmt(data.saldo || 0);
           document.getElementById('dashPemasukan').innerText = fmt(data.pemasukan || 0);
           document.getElementById('dashPengeluaran').innerText = fmt(data.pengeluaran || 0);
           renderCharts(data);
-        } else {
-          // Fallback data lokal
-          const mockData = {
-            saldo: 4850000,
-            pemasukan: 8500000,
-            pengeluaran: 3650000,
-            katLabels: ['Makan', 'Transport', 'Listrik', 'Belanja'],
-            katValues: [1800000, 450000, 600000, 800000]
-          };
-          const fmt = (num) => "Rp " + Number(num).toLocaleString('id-ID');
-          document.getElementById('dashSaldo').innerText = fmt(mockData.saldo);
-          document.getElementById('dashPemasukan').innerText = fmt(mockData.pemasukan);
-          document.getElementById('dashPengeluaran').innerText = fmt(mockData.pengeluaran);
-          renderCharts(mockData);
         }
       } catch (e) {
         console.error(e);
@@ -1268,11 +1283,13 @@
       
       try {
         const data = await callBackend('getCalendarData', { year: calYear, month: calMonth });
-        calendarCache = data || {};
-        renderCalendarGrid(calendarCache);
+        if (data) {
+          calendarCache = data;
+          setCache('dompetku_cache_cal', data);
+          renderCalendarGrid(calendarCache);
+        }
       } catch (e) {
         console.error("Error loadCalendar:", e);
-        renderCalendarGrid({});
       }
     }
 
@@ -1303,6 +1320,18 @@
         `;
       }
       document.getElementById('calendarBody').innerHTML = html;
+    }
+
+    async function loadRiwayat() {
+      try {
+        const data = await callBackend('getRiwayatTransaksi');
+        if (data) {
+          setCache('dompetku_cache_riwayat', data);
+          renderRiwayatList(data);
+        }
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     async function loadMaster() {
@@ -1393,26 +1422,6 @@
         btn.disabled = false; 
         btn.innerText = originalText;
         showNotification('Gagal terhubung saat menyimpan transaksi.', true);
-      }
-    }
-
-    async function loadRiwayat() {
-      const listEl = document.getElementById('riwayatList');
-      listEl.innerHTML = '<div class="text-center text-secondary py-4">Memuat riwayat...</div>';
-      try {
-        const data = await callBackend('getRiwayatTransaksi');
-        if (data) {
-          renderRiwayatList(data);
-        } else {
-          const mockRiwayat = [
-            { tipe: 'Pemasukan', kategori: 'Gaji', tanggal: '2026-08-01', dompet: 'BCA', jumlah: 5000000 },
-            { tipe: 'Pengeluaran', kategori: 'Makan', tanggal: '2026-08-02', dompet: 'Cash', jumlah: 150000 },
-            { tipe: 'Pengeluaran', kategori: 'Belanja', tanggal: '2026-08-04', dompet: 'Gopay', jumlah: 350000 }
-          ];
-          renderRiwayatList(mockRiwayat);
-        }
-      } catch (e) {
-        renderRiwayatList([]);
       }
     }
 
