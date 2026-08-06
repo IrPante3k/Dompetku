@@ -146,6 +146,55 @@
     .theme-toggle-btn:active {
       transform: scale(0.9);
     }
+    .btn-main:active {
+      transform: scale(0.97);
+    }
+
+    /* FLOATING ACTION BUTTON (FAB) & ANIMATIONS */
+    .fab-add-tx {
+      position: fixed;
+      bottom: 92px;
+      right: 20px;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: var(--primary-gradient);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      box-shadow: 0 10px 25px rgba(59, 130, 246, 0.45);
+      z-index: 1040;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+      animation: pulseGlow 3s infinite ease-in-out;
+    }
+    .fab-add-tx:active {
+      transform: scale(0.88);
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4); transform: scale(1); }
+      50% { box-shadow: 0 14px 35px rgba(59, 130, 246, 0.75); transform: scale(1.06); }
+    }
+
+    .hero-add-tx-card {
+      background: var(--primary-gradient);
+      border-radius: 24px;
+      border: none;
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      position: relative;
+    }
+    .btn-tambah-tx-hero {
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+    .btn-tambah-tx-hero:active {
+      transform: scale(0.94);
+    }
 
     .bottom-nav {
       position: fixed;
@@ -500,63 +549,25 @@
 
       <!-- ================= TAB 2: TRANSAKSI HARIAN ================= -->
       <div class="tab-pane fade" id="tab-transaksi">
-        <div class="card p-4 mt-2">
-          <h5 class="fw-bold mb-4 text-center">Catat Transaksi</h5>
-          <form id="formTx" onsubmit="submitForm(event, 'simpanTransaksi', this)">
-            <div class="mb-3">
-              <label class="form-label required-label">Tanggal</label>
-              <input type="date" class="form-control" name="tanggal" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label required-label">Tipe Transaksi</label>
-              <select class="form-select" name="tipe" id="txTipe" onchange="renderKategoriOptions()" required>
-                <option value="Pengeluaran">Pengeluaran</option>
-                <option value="Pemasukan">Pemasukan</option>
-              </select>
-            </div>
-            <div class="mb-3" id="boxJenis">
-              <label class="form-label required-label">Jenis Pengeluaran</label>
-              <select class="form-select" name="jenis" id="txJenis" onchange="renderKategoriOptions()" required>
-                <option value="Kebutuhan">Kebutuhan</option>
-                <option value="Keinginan">Keinginan</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label required-label">Kategori</label>
-              <div class="input-group">
-                <select class="form-select" name="kategori" id="txKategori" required></select>
-                <button class="btn btn-outline-primary" type="button" title="Tambah Kategori" onclick="openMasterModal('kategori')"><i class="bi bi-plus-lg"></i></button>
-                <button class="btn btn-outline-secondary" type="button" title="Kelola / Hapus Kategori" onclick="openKelolaMasterModal('kategori')"><i class="bi bi-gear-fill"></i></button>
-              </div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label required-label">Akun / Dompet</label>
-              <div class="input-group">
-                <select class="form-select" name="dompet" id="txDompet" required></select>
-                <button class="btn btn-outline-primary" type="button" title="Tambah Dompet" onclick="openMasterModal('dompet')"><i class="bi bi-plus-lg"></i></button>
-                <button class="btn btn-outline-secondary" type="button" title="Kelola / Hapus Dompet" onclick="openKelolaMasterModal('dompet')"><i class="bi bi-gear-fill"></i></button>
-              </div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label required-label">Jumlah (Rp)</label>
-              <input type="number" inputmode="numeric" class="form-control form-control-lg fw-bold" name="jumlah" min="1" placeholder="0" oninput="updateCurrencyPreview(this, 'prevJumlahTx')" required>
-              <div class="currency-preview" id="prevJumlahTx">Rp 0</div>
-            </div>
-            <div class="mb-4">
-              <label class="form-label">Keterangan (Opsional)</label>
-              <input type="text" class="form-control" name="keterangan" placeholder="Contoh: Makan siang">
-            </div>
-            <button type="submit" class="btn btn-primary btn-main w-100">Simpan Transaksi</button>
-          </form>
+        <!-- Banner Tambah Transaksi -->
+        <div class="hero-add-tx-card p-4 mt-2 text-center text-white">
+          <div class="position-relative z-1 py-1">
+            <h5 class="fw-bold mb-1 fs-5">Riwayat Transaksi Harian</h5>
+            <p class="small text-white-50 mb-3">Pantau dan catat transaksi keuangan harian Anda</p>
+            <button class="btn btn-light btn-lg rounded-pill fw-bold px-4 py-2 d-inline-flex align-items-center gap-2 btn-tambah-tx-hero" type="button" onclick="openModalTambahTx()">
+              <i class="bi bi-plus-circle-fill text-primary fs-5"></i>
+              <span>Catat Transaksi Baru</span>
+            </button>
+          </div>
         </div>
         
         <div class="card p-4 mt-3">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h6 class="fw-bold m-0 fs-6">Riwayat Terakhir</h6>
-            <button class="btn btn-outline-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;" type="button" onclick="loadRiwayat()"><i class="bi bi-arrow-clockwise fs-5"></i></button>
+            <button class="btn btn-outline-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;" type="button" title="Perbarui Riwayat" onclick="loadRiwayat()"><i class="bi bi-arrow-clockwise fs-5"></i></button>
           </div>
           <div id="riwayatList">
-            <div class="text-center text-secondary small py-4">Memuat riwayat...</div>
+            <div class="text-center text-secondary small py-4">Belum ada transaksi tersimpan.</div>
           </div>
         </div>
       </div>
@@ -692,7 +703,75 @@
     </div>
   </div>
 
-  <!-- MODAL MASTER DATA -->
+  <!-- MODAL CATAT TRANSAKSI -->
+  <div class="modal fade" id="modalTambahTx" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header border-bottom-0 bg-body-tertiary">
+          <h5 class="modal-title fw-bold d-flex align-items-center gap-2 fs-5">
+            <i class="bi bi-plus-circle-fill text-primary fs-4"></i>
+            Catat Transaksi Baru
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="formTx" onsubmit="submitFormModal(event, 'simpanTransaksi', this)">
+            <div class="mb-3">
+              <label class="form-label required-label">Tanggal</label>
+              <input type="date" class="form-control" name="tanggal" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label required-label">Tipe Transaksi</label>
+              <select class="form-select" name="tipe" id="txTipe" onchange="renderKategoriOptions()" required>
+                <option value="Pengeluaran">Pengeluaran</option>
+                <option value="Pemasukan">Pemasukan</option>
+              </select>
+            </div>
+            <div class="mb-3" id="boxJenis">
+              <label class="form-label required-label">Jenis Pengeluaran</label>
+              <select class="form-select" name="jenis" id="txJenis" onchange="renderKategoriOptions()" required>
+                <option value="Kebutuhan">Kebutuhan</option>
+                <option value="Keinginan">Keinginan</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label required-label">Kategori</label>
+              <div class="input-group">
+                <select class="form-select" name="kategori" id="txKategori" required></select>
+                <button class="btn btn-outline-primary" type="button" title="Tambah Kategori" onclick="openMasterModal('kategori')"><i class="bi bi-plus-lg"></i></button>
+                <button class="btn btn-outline-secondary" type="button" title="Kelola / Hapus Kategori" onclick="openKelolaMasterModal('kategori')"><i class="bi bi-gear-fill"></i></button>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label required-label">Akun / Dompet</label>
+              <div class="input-group">
+                <select class="form-select" name="dompet" id="txDompet" required></select>
+                <button class="btn btn-outline-primary" type="button" title="Tambah Dompet" onclick="openMasterModal('dompet')"><i class="bi bi-plus-lg"></i></button>
+                <button class="btn btn-outline-secondary" type="button" title="Kelola / Hapus Dompet" onclick="openKelolaMasterModal('dompet')"><i class="bi bi-gear-fill"></i></button>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label required-label">Jumlah (Rp)</label>
+              <input type="number" inputmode="numeric" class="form-control form-control-lg fw-bold" name="jumlah" min="1" placeholder="0" oninput="updateCurrencyPreview(this, 'prevJumlahTx')" required>
+              <div class="currency-preview" id="prevJumlahTx">Rp 0</div>
+            </div>
+            <div class="mb-4">
+              <label class="form-label">Keterangan (Opsional)</label>
+              <input type="text" class="form-control" name="keterangan" placeholder="Contoh: Makan siang">
+            </div>
+            <button type="submit" class="btn btn-primary btn-main w-100 rounded-3 py-2.5 fw-bold">Simpan Transaksi</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING ACTION BUTTON (FAB) -->
+  <button class="fab-add-tx app-component" type="button" title="Catat Transaksi Baru" onclick="openModalTambahTx()">
+    <i class="bi bi-plus-lg"></i>
+  </button>
+
+  <!-- MODAL TAMBAH MASTER DATA -->
   <div class="modal fade" id="modalMaster" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow-lg rounded-4">
@@ -814,7 +893,7 @@
     }
 
     let dbMaster = { pemasukan: ['Gaji', 'Bonus', 'Investasi'], kebutuhan: ['Makan', 'Listrik', 'Air', 'Transport'], keinginan: ['Hiburan', 'Belanja', 'Nongkrong'], dompet: ['Cash', 'BCA', 'Mandiri', 'Gopay'], produk: ['Produk A', 'Jasa B'] };
-    let bsModal, bsModalKelola, bsModalCal, toastApp;
+    let bsModal, bsModalKelola, bsModalCal, bsModalTx, toastApp;
     let chartDonutInstance = null, chartKategoriInstance = null;
     let calYear = new Date().getFullYear();
     let calMonth = new Date().getMonth() + 1;
@@ -826,8 +905,9 @@
       bsModal = new bootstrap.Modal(document.getElementById('modalMaster'));
       bsModalKelola = new bootstrap.Modal(document.getElementById('modalKelolaMaster'));
       bsModalCal = new bootstrap.Modal(document.getElementById('modalCalDetail'));
+      bsModalTx = new bootstrap.Modal(document.getElementById('modalTambahTx'));
       toastApp = new bootstrap.Toast(document.getElementById('liveToast'), {delay: 3000});
-      
+
       // 2. Set tanggal default hari ini untuk semua input date
       const today = new Date().toISOString().split('T')[0];
       document.querySelectorAll('input[type="date"]').forEach(e => {
@@ -837,6 +917,28 @@
       // 3. Set bulan default pada input filterMonth
       const currentMonthVal = `${calYear}-${String(calMonth).padStart(2, '0')}`;
       document.getElementById('filterMonth').value = currentMonthVal;
+
+      // 4. Inisialisasi Ikon Tema
+      updateThemeIcon();
+
+      // 5. Cek Sesi Ingat Saya (Auto-Login)
+      checkSavedSession();
+    };
+
+    function openModalTambahTx() {
+      const today = new Date().toISOString().split('T')[0];
+      const form = document.getElementById('formTx');
+      if (form) {
+        form.querySelectorAll('input[type="date"]').forEach(i => i.value = today);
+      }
+      renderKategoriOptions();
+      if (bsModalTx) bsModalTx.show();
+    }
+
+    function submitFormModal(e, funcName, formEl) {
+      submitForm(e, funcName, formEl);
+      if (bsModalTx) bsModalTx.hide();
+    }
 
       // 4. Inisialisasi Ikon Tema
       updateThemeIcon();
