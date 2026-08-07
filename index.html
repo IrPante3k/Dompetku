@@ -72,8 +72,8 @@
       background-color: var(--app-bg);
       font-family: var(--app-font);
       color: var(--text-main);
-      padding-top: 84px;
-      padding-bottom: 104px;
+      padding-top: 68px;
+      padding-bottom: 92px;
       margin: 0;
       overflow-x: hidden;
       -webkit-tap-highlight-color: transparent;
@@ -514,6 +514,20 @@
           </div>
         </div>
 
+        <!-- RINCIAN SALDO AKUN / DOMPET -->
+        <div class="card p-3 mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold m-0 fs-6 d-flex align-items-center gap-2">
+              <i class="bi bi-wallet2 text-primary fs-5"></i>
+              <span>Saldo Akun & Dompet</span>
+            </h6>
+            <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold" onclick="openMasterModal('dompet')">+ Tambah</button>
+          </div>
+          <div id="dompetBalanceContainer" class="row g-2">
+            <div class="text-center text-secondary small py-2">Memuat saldo dompet...</div>
+          </div>
+        </div>
+
         <!-- KALENDER -->
         <div class="card p-3">
           <div class="d-flex justify-content-between align-items-center mb-3">
@@ -841,7 +855,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // MASUKKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI SINI
-    let DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbwgFa97cJbcUgvlynhP9X6J9PLyo3UUN8KsdyFB0rAN2iSFBaj1TOBhMS1LH06KL0X-/exec";
+    let DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbwOyMdPbCm8AwcpwBJujx7ga7obU03ksO0Fb4sls6czOTVx3L-eZBgh86jqtU04_QWM/exec";
     let GAS_API_URL = DEFAULT_GAS_URL;
     // Hapus sisa URL lama dari localStorage jika ada
     try { localStorage.removeItem('dompetku_gas_url'); } catch(e){}
@@ -1337,6 +1351,51 @@
       }
     }
 
+    function renderDompetBalances(balances) {
+      const container = document.getElementById('dompetBalanceContainer');
+      if (!container) return;
+      
+      let dompetList = (dbMaster && dbMaster.dompet) ? dbMaster.dompet : ["Tunai", "BCA", "Mandiri", "GoPay", "OVO", "Dana"];
+      if (!balances) balances = {};
+
+      let html = '';
+      dompetList.forEach(d => {
+        const bal = balances[d] !== undefined ? balances[d] : 0;
+        const fmt = "Rp " + Number(bal).toLocaleString('id-ID');
+        
+        let icon = "bi-wallet2";
+        let iconBg = "bg-primary-subtle text-primary";
+        const dLower = d.toLowerCase();
+
+        if (dLower.includes('cash') || dLower.includes('tunai') || dLower.includes('dompet') || dLower.includes('kas')) {
+          icon = "bi-cash-stack";
+          iconBg = "bg-success-subtle text-success";
+        } else if (dLower.includes('bca') || dLower.includes('mandiri') || dLower.includes('bni') || dLower.includes('bri') || dLower.includes('bank')) {
+          icon = "bi-bank";
+          iconBg = "bg-primary-subtle text-primary";
+        } else if (dLower.includes('gopay') || dLower.includes('ovo') || dLower.includes('dana') || dLower.includes('shopee') || dLower.includes('linkaja')) {
+          icon = "bi-phone";
+          iconBg = "bg-info-subtle text-info";
+        }
+
+        html += `
+          <div class="col-6 col-sm-4">
+            <div class="p-2 px-3 border rounded-3 bg-body d-flex align-items-center gap-2 shadow-sm h-100">
+              <div class="rounded-circle p-2 ${iconBg} d-flex align-items-center justify-content-center" style="width:34px; height:34px; flex-shrink:0;">
+                <i class="bi ${icon} fs-6"></i>
+              </div>
+              <div class="overflow-hidden" style="min-width:0;">
+                <div class="small text-secondary text-truncate" style="font-size:0.72rem; font-weight:600;">${d}</div>
+                <div class="fw-bold fs-6 text-truncate text-body" style="font-size:0.88rem !important;">${fmt}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
     async function applyFilter() {
       let monthVal = document.getElementById('filterMonth').value;
       if (!monthVal) return;
@@ -1363,6 +1422,7 @@
           document.getElementById('dashPemasukan').innerText = fmt(data.pemasukan || 0);
           document.getElementById('dashPengeluaran').innerText = fmt(data.pengeluaran || 0);
           renderCharts(data);
+          renderDompetBalances(data.dompetBalances);
         }
       } catch (e) {
         console.error(e);
@@ -1440,6 +1500,23 @@
       }
     }
 
+    function openMasterModal(type) {
+      document.getElementById('modalTargetType').value = type;
+      document.getElementById('modalInputText').value = '';
+      let title = type.toUpperCase();
+      if (type === 'kategori') {
+        const tipe = document.getElementById('txTipe').value;
+        const subType = (tipe === 'Pemasukan') ? 'Pemasukan' : document.getElementById('txJenis').value;
+        title = `Kategori (${tipe} - ${subType})`;
+      } else if (type === 'dompet') {
+        title = 'Akun / Dompet Baru';
+      } else if (type === 'produk') {
+        title = 'Produk / Jasa Baru';
+      }
+      document.getElementById('modalTitle').innerText = 'Tambah ' + title;
+      bsModal.show();
+    }
+
     async function submitMasterBaru() {
       const type = document.getElementById('modalTargetType').value;
       const val = document.getElementById('modalInputText').value.trim();
@@ -1452,29 +1529,22 @@
         colType = (tipe === 'Pemasukan') ? 'pemasukan' : document.getElementById('txJenis').value.toLowerCase();
       }
 
+      // 1. UPDATE LOKAL INSTAN (0 MS LATENCY)
+      if (!dbMaster[colType]) dbMaster[colType] = [];
+      if (!dbMaster[colType].includes(val)) dbMaster[colType].push(val);
+      populateDropdowns();
+      renderDompetBalances(getCache('dompetku_cache_dash') ? getCache('dompetku_cache_dash').dompetBalances : {});
+      try { bsModal.hide(); } catch(e){}
+      showNotification(`"${val}" berhasil ditambahkan!`);
+
+      // 2. PROSES SYNC GOOGLE SHEETS DI BACKGROUND
       btn.disabled = true; btn.innerText = 'Simpan...';
-      try {
-        const res = await callBackend('tambahMasterItem', { colType: colType, value: val });
+      callBackend('tambahMasterItem', { colType: colType, value: val }).then(res => {
         btn.disabled = false; btn.innerText = 'Simpan';
-        bsModal.hide();
-        if (res && res.status === 'success') {
-          showNotification(res.message);
-          loadMaster();
-        } else if (res) {
-          showNotification(res.message, true);
-        } else {
-          if (colType === 'pemasukan') dbMaster.pemasukan.push(val);
-          else if (colType === 'kebutuhan') dbMaster.kebutuhan.push(val);
-          else if (colType === 'keinginan') dbMaster.keinginan.push(val);
-          else if (colType === 'dompet') dbMaster.dompet.push(val);
-          else if (colType === 'produk') dbMaster.produk.push(val);
-          showNotification('Item master berhasil ditambahkan (Lokal)!');
-          populateDropdowns();
-        }
-      } catch (e) {
+        loadMaster();
+      }).catch(err => {
         btn.disabled = false; btn.innerText = 'Simpan';
-        showNotification('Gagal menambah item.', true);
-      }
+      });
     }
 
     async function submitForm(e, funcName, formEl) {
@@ -1590,23 +1660,21 @@
     async function hapusMasterItemProcess(colType, val) {
       if (!confirm(`Apakah Anda yakin ingin menghapus "${val}" dari master ${colType}?`)) return;
 
-      try {
-        const res = await callBackend('hapusMasterItem', { colType: colType, val: val });
-        if (res && res.status === 'success') {
-          showNotification(res.message);
-          loadMaster();
-          setTimeout(() => renderKelolaMasterList(colType), 400);
-        } else if (res) {
-          showNotification(res.message || 'Gagal menghapus item.', true);
-        } else {
-          dbMaster[colType] = dbMaster[colType].filter(i => i !== val);
-          showNotification(`"${val}" berhasil dihapus dari ${colType} (Lokal).`);
-          populateDropdowns();
-          renderKelolaMasterList(colType);
-        }
-      } catch (err) {
-        showNotification('Gagal terhubung saat menghapus item.', true);
+      // 1. UPDATE LOKAL INSTAN (0 MS LATENCY)
+      if (dbMaster[colType]) {
+        dbMaster[colType] = dbMaster[colType].filter(i => i !== val);
       }
+      populateDropdowns();
+      renderKelolaMasterList(colType);
+      renderDompetBalances(getCache('dompetku_cache_dash') ? getCache('dompetku_cache_dash').dompetBalances : {});
+      showNotification(`"${val}" berhasil dihapus!`);
+
+      // 2. PROSES SYNC GOOGLE SHEETS DI BACKGROUND
+      callBackend('hapusMasterItem', { colType: colType, val: val }).then(res => {
+        loadMaster();
+      }).catch(err => {
+        console.warn("Hapus master sync warning:", err);
+      });
     }
 
     /* HAPUS TRANSAKSI INSTAN (0 MS LATENCY) */
