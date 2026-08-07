@@ -943,13 +943,6 @@
       if (bsModalTx) bsModalTx.hide();
     }
 
-      // 4. Inisialisasi Ikon Tema
-      updateThemeIcon();
-
-      // 5. Cek Sesi Ingat Saya (Auto-Login)
-      checkSavedSession();
-    };
-
     async function checkSavedSession() {
       const savedUser = localStorage.getItem('dompetku_user');
       if (savedUser) {
