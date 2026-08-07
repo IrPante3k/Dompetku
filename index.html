@@ -429,7 +429,7 @@
 
       <div class="text-center mt-4">
         <small class="text-secondary" id="authToggleText">
-          Belum punya akun? <a href="javascript:void(0)" class="text-primary fw-bold text-decoration-none" onclick="toggleAuthMode(true)">Daftar Sekarang</a>
+          Belum punya akun? <button type="button" class="btn btn-link p-0 text-primary fw-bold text-decoration-none shadow-none border-0 align-baseline" onclick="toggleAuthMode(true)">Daftar Sekarang</button>
         </small>
       </div>
     </div>
@@ -1074,12 +1074,12 @@
         title.innerText = 'Daftar Akun Baru';
         subtitle.innerText = 'Buat akun untuk mengelola keuangan Anda';
         btn.innerText = 'Daftar';
-        toggleText.innerHTML = 'Sudah punya akun? <a href="javascript:void(0)" class="text-primary fw-bold text-decoration-none" onclick="toggleAuthMode(false)">Login di sini</a>';
+        toggleText.innerHTML = 'Sudah punya akun? <button type="button" class="btn btn-link p-0 text-primary fw-bold text-decoration-none shadow-none border-0 align-baseline" onclick="toggleAuthMode(false)">Login di sini</button>';
       } else {
         title.innerText = 'Masuk ke DompetKu';
         subtitle.innerText = 'Kelola keuangan Anda secara praktis';
         btn.innerText = 'Masuk';
-        toggleText.innerHTML = 'Belum punya akun? <a href="javascript:void(0)" class="text-primary fw-bold text-decoration-none" onclick="toggleAuthMode(true)">Daftar Sekarang</a>';
+        toggleText.innerHTML = 'Belum punya akun? <button type="button" class="btn btn-link p-0 text-primary fw-bold text-decoration-none shadow-none border-0 align-baseline" onclick="toggleAuthMode(true)">Daftar Sekarang</button>';
       }
     }
 
