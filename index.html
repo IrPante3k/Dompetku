@@ -407,7 +407,7 @@
 
       <div id="authAlert" class="alert d-none small text-center rounded-3" role="alert"></div>
 
-      <form id="authForm" onsubmit="handleAuthSubmit(event)">
+      <form id="authForm" onsubmit="handleAuthSubmit(event); return false;">
         <div class="mb-3">
           <label class="form-label">Username</label>
           <input type="text" id="authUsername" class="form-control" placeholder="Masukkan username" required autocomplete="username">
@@ -841,7 +841,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // MASUKKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI SINI
-    let DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxd8rp0OVqmV18BtsO6WAUiOXaXCawlCLLXL6OrVh_gix8sO9vULkDuDAqyWvPAA5JS/exec";
+    let DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbwgFa97cJbcUgvlynhP9X6J9PLyo3UUN8KsdyFB0rAN2iSFBaj1TOBhMS1LH06KL0X-/exec";
     let GAS_API_URL = DEFAULT_GAS_URL;
     // Hapus sisa URL lama dari localStorage jika ada
     try { localStorage.removeItem('dompetku_gas_url'); } catch(e){}
@@ -1084,13 +1084,16 @@
     }
 
     async function handleAuthSubmit(e) {
-      e.preventDefault();
+      if (e && e.preventDefault) e.preventDefault();
       const user = document.getElementById('authUsername').value.trim();
       const pass = document.getElementById('authPassword').value;
       const btn = document.getElementById('btnAuthSubmit');
       const alertBox = document.getElementById('authAlert');
 
-      if (!user || !pass) return;
+      if (!user || !pass) {
+        showAlert('authAlert', 'danger', '⚠️ Username dan Password wajib diisi.');
+        return false;
+      }
 
       btn.disabled = true;
       btn.innerText = 'Memproses...';
@@ -1104,11 +1107,10 @@
         btn.innerText = isRegisterMode ? 'Daftar' : 'Masuk';
 
         if (res && (res.success || res.status === 'success')) {
-          showAlert('authAlert', 'success', res.message || 'Berhasil');
+          showAlert('authAlert', 'success', res.message || '✅ Berhasil!');
           
           if (!isRegisterMode) {
             document.getElementById('displayUsername').innerText = user;
-            
             if (document.getElementById('authRemember').checked) {
               localStorage.setItem('dompetku_user', user);
             } else {
@@ -1124,32 +1126,24 @@
               applyFilter();
               loadRiwayat();
               loadCalendar();
-            }, 800);
+            }, 600);
           } else {
-            setTimeout(() => toggleAuthMode(false), 1200);
+            setTimeout(() => {
+              toggleAuthMode(false);
+              showAlert('authAlert', 'success', '✅ Pendaftaran berhasil! Silakan klik tombol Masuk.');
+            }, 1000);
           }
-        } else if (res) {
-          showAlert('authAlert', 'danger', res.message || 'Gagal memproses.');
+        } else if (res && res.message) {
+          showAlert('authAlert', 'danger', res.message);
         } else {
-          // Fallback lokal jika GAS_API_URL belum diisi
-          setTimeout(() => {
-            document.getElementById('displayUsername').innerText = user || "Demo User";
-            if (document.getElementById('authRemember').checked) {
-              localStorage.setItem('dompetku_user', user || "Demo User");
-            }
-            document.getElementById('authContainer').style.display = 'none';
-            document.querySelectorAll('.app-component').forEach(el => el.style.display = 'flex');
-            document.querySelector('.main-container').style.display = 'block';
-            showNotification('Login Pratinjau Lokal Berhasil!');
-            populateDropdowns();
-            loadLocalDummyData();
-          }, 600);
+          showAlert('authAlert', 'danger', '⚠️ Response dari server tidak valid.');
         }
       } catch (err) {
         btn.disabled = false;
         btn.innerText = isRegisterMode ? 'Daftar' : 'Masuk';
-        showAlert('authAlert', 'danger', 'Gagal terhubung ke server.');
+        showAlert('authAlert', 'danger', '⚠️ Gagal terhubung ke server login. Periksa koneksi internet.');
       }
+      return false;
     }
 
     function showAlert(elementId, type, message) {
