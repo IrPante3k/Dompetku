@@ -21,13 +21,16 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <!-- FIREBASE SDK (Compat Version - Auth & Realtime Database 100% Free Without Credit Card) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
   <script>
-    // Inline script untuk mencegah Flash of Unstyled Content (FOUC) & Auto-Zoom
     (function() {
       const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
       document.documentElement.setAttribute('data-bs-theme', savedTheme);
 
-      // Mencegah auto-zoom gesture pada iOS Safari / Android WebView
       document.addEventListener('gesturestart', function(e) {
         e.preventDefault();
       });
@@ -247,7 +250,6 @@
 
     .main-container { padding: 0 16px; max-width: 800px; margin: 0 auto; }
     
-    /* Modern Mobile Cards */
     .card {
       background-color: var(--card-bg);
       border-radius: 20px;
@@ -307,7 +309,6 @@
       border: 2px solid #3b82f6;
     }
 
-    /* Forms & Mobile Touch Controls (16px minimum font-size prevents auto-zoom on mobile focus) */
     .form-control, .form-select, input[type="text"], input[type="password"], input[type="number"], input[type="date"], input[type="month"] {
       border-radius: 14px;
       padding: 14px 16px;
@@ -338,7 +339,6 @@
     }
     .btn-main:active { transform: scale(0.98); }
 
-    /* Touch-friendly Input Group Addons */
     .input-group > .btn {
       border-top-right-radius: 14px !important;
       border-bottom-right-radius: 14px !important;
@@ -374,7 +374,6 @@
     /* Toast Notification */
     .toast-container { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 9999; width: 90%; max-width: 400px; }
 
-    /* Custom Currency Preview Badge */
     .currency-preview {
       font-size: 0.8rem;
       font-weight: 600;
@@ -402,19 +401,19 @@
           <i class="bi bi-wallet2 fs-3"></i>
         </div>
         <h4 class="fw-bold m-0" id="authTitle">Masuk ke DompetKu</h4>
-        <p class="text-secondary small mt-1" id="authSubtitle">Kelola keuangan Anda secara praktis</p>
+        <p class="text-secondary small mt-1" id="authSubtitle">Kelola keuangan Anda secara praktis (Firebase Realtime DB)</p>
       </div>
 
       <div id="authAlert" class="alert d-none small text-center rounded-3" role="alert"></div>
 
       <form id="authForm" onsubmit="handleAuthSubmit(event); return false;">
         <div class="mb-3">
-          <label class="form-label">Username</label>
-          <input type="text" id="authUsername" class="form-control" placeholder="Masukkan username" required autocomplete="username">
+          <label class="form-label">Email / Username</label>
+          <input type="text" id="authUsername" class="form-control" placeholder="user@domain.com atau username" required autocomplete="username">
         </div>
         <div class="mb-3">
           <label class="form-label">Password</label>
-          <input type="password" id="authPassword" class="form-control" placeholder="Masukkan password" required autocomplete="current-password">
+          <input type="password" id="authPassword" class="form-control" placeholder="Masukkan password (min. 6 karakter)" required autocomplete="current-password">
         </div>
         <div class="d-flex justify-content-between align-items-center mb-4">
           <div class="form-check">
@@ -444,12 +443,10 @@
       <span>DompetKu</span>
     </h5>
     <div class="d-flex align-items-center gap-2">
-      <!-- Fullscreen Toggle Button -->
       <button class="theme-toggle-btn" onclick="toggleFullScreen()" title="Layar Penuh">
         <i class="bi bi-arrows-fullscreen fs-6"></i>
       </button>
 
-      <!-- Dark Mode Toggle Button -->
       <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Ubah Mode Tampilan">
         <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
       </button>
@@ -557,13 +554,12 @@
 
         <div class="card p-3">
           <h6 class="fw-bold mb-3 text-center">Distribusi Pengeluaran</h6>
-          <div class="chart-box"><canvas id="chartKategoriPie"></canvas></div>
+          <div class="chart-box"><canvas id="chartKategori"></canvas></div>
         </div>
       </div>
 
       <!-- ================= TAB 2: TRANSAKSI HARIAN ================= -->
       <div class="tab-pane fade" id="tab-transaksi">
-        <!-- Banner Tambah Transaksi -->
         <div class="hero-add-tx-card p-4 mt-2 text-center text-white">
           <div class="position-relative z-1 py-1">
             <h5 class="fw-bold mb-1 fs-5">Riwayat Transaksi Harian</h5>
@@ -854,62 +850,38 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // MASUKKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI SINI
-    let DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbwOyMdPbCm8AwcpwBJujx7ga7obU03ksO0Fb4sls6czOTVx3L-eZBgh86jqtU04_QWM/exec";
-    let GAS_API_URL = DEFAULT_GAS_URL;
-    // Hapus sisa URL lama dari localStorage jika ada
-    try { localStorage.removeItem('dompetku_gas_url'); } catch(e){}
+    // =========================================================================
+    // CONFIGURATION FIREBASE REALTIME DATABASE (100% FREE WITHOUT CREDIT CARD)
+    // =========================================================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyA8fBbDHgcSlXPeMfsT06rkJi2TcPNaLNc",
+      authDomain: "dompetku-a8dbc.firebaseapp.com",
+      projectId: "dompetku-a8dbc",
+      storageBucket: "dompetku-a8dbc.firebasestorage.app",
+      messagingSenderId: "606415083018",
+      appId: "1:606415083018:web:e04e2a28f86871eb0f71f3",
+      measurementId: "G-FKQP91KS74"
+    };
 
-    async function callBackend(action, payload = {}, retries = 2) {
-      // 1. Jika GAS_API_URL terisi (di-host di Vercel atau Standalone Browser)
-      if (GAS_API_URL && GAS_API_URL.trim() !== "") {
-        const params = new URLSearchParams();
-        params.append('action', action);
-        params.append('payload', JSON.stringify(payload));
-        
-        // Masukkan parameter individual untuk kompatibilitas penuh
-        if (payload && typeof payload === 'object') {
-          for (const key in payload) {
-            if (payload[key] !== undefined && payload[key] !== null && typeof payload[key] !== 'object') {
-              params.append(key, payload[key]);
-            }
-          }
-        }
+    let rtdb, auth;
+    let currentUser = null;
 
-        const url = `${GAS_API_URL}?${params.toString()}`;
-
-        for (let attempt = 1; attempt <= retries; attempt++) {
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 12000); // 12 detik batas waktu per percobaan
-
-            const response = await fetch(url, { signal: controller.signal });
-            clearTimeout(timeoutId);
-
-            if (!response.ok) throw new Error(`HTTP Status ${response.status}`);
-            const res = await response.json();
-            return res;
-          } catch (err) {
-            console.warn(`Attempt ${attempt} failed for ${action}:`, err);
-            if (attempt === retries) throw err;
-            await new Promise(r => setTimeout(r, 1000)); // Tunggu 1 detik sebelum mencoba lagi
-          }
-        }
-      }
-
-      // 2. Jika di-host langsung di dalam Google Apps Script (iframe)
-      if (typeof google !== 'undefined' && google.script && google.script.run) {
-        return new Promise((resolve, reject) => {
-          google.script.run
-            .withSuccessHandler(resolve)
-            .withFailureHandler(reject)[action](payload);
-        });
-      }
-
-      return null;
+    try {
+      firebase.initializeApp(firebaseConfig);
+      rtdb = firebase.database();
+      auth = firebase.auth();
+    } catch (e) {
+      console.error("Firebase Realtime DB init error:", e);
     }
 
-    let dbMaster = { pemasukan: ['Gaji', 'Bonus', 'Investasi'], kebutuhan: ['Makan', 'Listrik', 'Air', 'Transport'], keinginan: ['Hiburan', 'Belanja', 'Nongkrong'], dompet: ['Cash', 'BCA', 'Mandiri', 'Gopay'], produk: ['Produk A', 'Jasa B'] };
+    let dbMaster = { 
+      pemasukan: ['Gaji', 'Bonus', 'Investasi', 'Lainnya'], 
+      kebutuhan: ['Makan', 'Listrik', 'Air', 'Transportasi'], 
+      keinginan: ['Hiburan', 'Belanja', 'Nongkrong'], 
+      dompet: ['Tunai', 'BCA', 'Mandiri', 'GoPay'], 
+      produk: ['Produk A', 'Jasa Service'] 
+    };
+
     let bsModal, bsModalKelola, bsModalCal, bsModalTx, toastApp;
     let chartDonutInstance = null, chartKategoriInstance = null;
     let calYear = new Date().getFullYear();
@@ -918,36 +890,395 @@
     let isRegisterMode = false;
 
     window.onload = function() {
-      // 1. Inisialisasi Modal & Toast Bootstrap
       bsModal = new bootstrap.Modal(document.getElementById('modalMaster'));
       bsModalKelola = new bootstrap.Modal(document.getElementById('modalKelolaMaster'));
       bsModalCal = new bootstrap.Modal(document.getElementById('modalCalDetail'));
       bsModalTx = new bootstrap.Modal(document.getElementById('modalTambahTx'));
       toastApp = new bootstrap.Toast(document.getElementById('liveToast'), {delay: 3000});
 
-      // 2. Set tanggal default hari ini untuk semua input date
       const today = new Date().toISOString().split('T')[0];
-      document.querySelectorAll('input[type="date"]').forEach(e => {
-        e.value = today;
-      });
+      document.querySelectorAll('input[type="date"]').forEach(e => e.value = today);
       
-      // 3. Set bulan default pada input filterMonth
       const currentMonthVal = `${calYear}-${String(calMonth).padStart(2, '0')}`;
       document.getElementById('filterMonth').value = currentMonthVal;
 
-      // 4. Inisialisasi Ikon Tema
       updateThemeIcon();
 
-      // 5. Cek Sesi Ingat Saya (Auto-Login)
-      checkSavedSession();
+      // Listen Auth State perubahan user (Auto-Login Firebase)
+      if (auth) {
+        auth.onAuthStateChanged(user => {
+          if (user) {
+            currentUser = user;
+            const displayName = user.email ? user.email.split('@')[0] : 'User';
+            document.getElementById('displayUsername').innerText = displayName;
+            
+            document.getElementById('authContainer').style.display = 'none';
+            document.querySelectorAll('.app-component').forEach(el => el.style.display = 'flex');
+            document.querySelector('.main-container').style.display = 'block';
+
+            populateDropdowns();
+            loadMasterDataRTDB();
+            applyFilter();
+            loadRiwayat();
+            loadCalendar();
+          } else {
+            currentUser = null;
+            document.getElementById('authContainer').style.display = 'flex';
+            document.querySelectorAll('.app-component').forEach(el => el.style.display = 'none');
+          }
+        });
+      }
     };
 
+    function formatAuthEmail(inputStr) {
+      inputStr = inputStr.trim();
+      if (!inputStr.includes('@')) {
+        return inputStr.toLowerCase() + '@dompetku.app';
+      }
+      return inputStr;
+    }
+
+    async function handleAuthSubmit(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const rawUser = document.getElementById('authUsername').value.trim();
+      const pass = document.getElementById('authPassword').value;
+      const btn = document.getElementById('btnAuthSubmit');
+      const alertBox = document.getElementById('authAlert');
+
+      if (!rawUser || !pass) {
+        showAlert('authAlert', 'danger', '⚠️ Username/Email dan Password wajib diisi.');
+        return false;
+      }
+
+      if (pass.length < 6) {
+        showAlert('authAlert', 'danger', '⚠️ Password minimal 6 karakter.');
+        return false;
+      }
+
+      btn.disabled = true;
+      btn.innerText = 'Memproses...';
+      alertBox.classList.add('d-none');
+
+      const email = formatAuthEmail(rawUser);
+
+      try {
+        if (isRegisterMode) {
+          await auth.createUserWithEmailAndPassword(email, pass);
+          const newUserId = auth.currentUser.uid;
+          await rtdb.ref('users/' + newUserId + '/masterData/config').set(dbMaster);
+          
+          btn.disabled = false;
+          btn.innerText = 'Daftar';
+          showAlert('authAlert', 'success', '✅ Pendaftaran akun Firebase berhasil! Mengalihkan...');
+        } else {
+          await auth.signInWithEmailAndPassword(email, pass);
+          btn.disabled = false;
+          btn.innerText = 'Masuk';
+        }
+      } catch (err) {
+        btn.disabled = false;
+        btn.innerText = isRegisterMode ? 'Daftar' : 'Masuk';
+
+        let msg = err.message;
+        if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+          msg = '⚠️ Username/Email atau Password salah.';
+        } else if (err.code === 'auth/email-already-in-use') {
+          msg = '⚠️ Username/Email ini sudah terdaftar.';
+        }
+        showAlert('authAlert', 'danger', msg);
+      }
+      return false;
+    }
+
+    function logout() {
+      if (auth) {
+        auth.signOut().then(() => {
+          showNotification('Berhasil keluar dari akun.');
+        });
+      }
+    }
+
+    /* REALTIME DATABASE CRUD OPERATIONS */
+    async function loadMasterDataRTDB() {
+      if (!currentUser) return;
+      try {
+        const snap = await rtdb.ref('users/' + currentUser.uid + '/masterData/config').once('value');
+        if (snap.exists()) {
+          dbMaster = snap.val();
+        } else {
+          await rtdb.ref('users/' + currentUser.uid + '/masterData/config').set(dbMaster);
+        }
+        populateDropdowns();
+      } catch (e) {
+        console.error("Gagal load MasterData RTDB:", e);
+        populateDropdowns();
+      }
+    }
+
+    async function submitMasterBaru() {
+      const type = document.getElementById('modalTargetType').value;
+      const val = document.getElementById('modalInputText').value.trim();
+      if (!val) { showNotification("Nama item tidak boleh kosong!", true); return; }
+
+      let colType = type;
+      if (type === 'kategori') {
+        const tipe = document.getElementById('txTipe').value;
+        colType = (tipe === 'Pemasukan') ? 'pemasukan' : document.getElementById('txJenis').value.toLowerCase();
+      }
+
+      if (!dbMaster[colType]) dbMaster[colType] = [];
+      if (!dbMaster[colType].includes(val)) dbMaster[colType].push(val);
+
+      populateDropdowns();
+      try { bsModal.hide(); } catch(e){}
+      showNotification(`"${val}" berhasil ditambahkan!`);
+
+      if (currentUser) {
+        await rtdb.ref('users/' + currentUser.uid + '/masterData/config').set(dbMaster);
+      }
+    }
+
+    async function hapusMasterItemProcess(colType, val) {
+      if (!confirm(`Apakah Anda yakin ingin menghapus "${val}" dari master ${colType}?`)) return;
+
+      if (dbMaster[colType]) {
+        dbMaster[colType] = dbMaster[colType].filter(i => i !== val);
+      }
+      populateDropdowns();
+      renderKelolaMasterList(colType);
+      showNotification(`"${val}" berhasil dihapus!`);
+
+      if (currentUser) {
+        await rtdb.ref('users/' + currentUser.uid + '/masterData/config').set(dbMaster);
+      }
+    }
+
+    async function submitForm(e, funcName, formEl) {
+      e.preventDefault();
+      if (!formEl.checkValidity()) { formEl.reportValidity(); return; }
+
+      const formData = {}; 
+      new FormData(formEl).forEach((val, key) => formData[key] = val);
+      const today = new Date().toISOString().split('T')[0];
+
+      if (!currentUser) return;
+      const txRef = rtdb.ref('users/' + currentUser.uid + '/transaksi');
+
+      try {
+        if (funcName === 'simpanTransaksi') {
+          await txRef.push({
+            tanggal: formData.tanggal || today,
+            tipe: formData.tipe || 'Pengeluaran',
+            jenis: formData.jenis || '-',
+            kategori: formData.kategori || 'Umum',
+            dompet: formData.dompet || 'Kas',
+            jumlah: Number(formData.jumlah || 0),
+            keterangan: formData.keterangan || '-',
+            createdAt: firebase.database.ServerValue.TIMESTAMP
+          });
+        } else if (funcName === 'simpanSampingan') {
+          await txRef.push({
+            tanggal: formData.tanggal || today,
+            tipe: formData.tipe,
+            jenis: "Usaha Sampingan",
+            kategori: formData.produk || "Usaha",
+            dompet: formData.dompet || "-",
+            jumlah: Number(formData.jumlah || 0),
+            keterangan: `[Usaha: ${formData.produk}] ${formData.keterangan || ''}`,
+            createdAt: firebase.database.ServerValue.TIMESTAMP
+          });
+        } else if (funcName === 'simpanTransfer') {
+          const nominal = Number(formData.nominal) || 0;
+          const admin = Number(formData.admin) || 0;
+          
+          await txRef.push({
+            tanggal: formData.tanggal || today,
+            tipe: "Pengeluaran",
+            jenis: "Transfer Out",
+            kategori: "Transfer",
+            dompet: formData.dariDompet,
+            jumlah: nominal + admin,
+            keterangan: `Transfer ke ${formData.keDompet} (Admin: ${admin}) ${formData.keterangan || ''}`,
+            createdAt: firebase.database.ServerValue.TIMESTAMP
+          });
+
+          await txRef.push({
+            tanggal: formData.tanggal || today,
+            tipe: "Pemasukan",
+            jenis: "Transfer In",
+            kategori: "Transfer",
+            dompet: formData.keDompet,
+            jumlah: nominal,
+            keterangan: `Transfer dari ${formData.dariDompet} ${formData.keterangan || ''}`,
+            createdAt: firebase.database.ServerValue.TIMESTAMP
+          });
+        } else if (funcName === 'simpanHutang') {
+          const nominal = Number(formData.total) || 0;
+          const tipe = formData.tipe === "Utang" ? "Pemasukan" : "Pengeluaran";
+          await txRef.push({
+            tanggal: today,
+            tipe: tipe,
+            jenis: formData.tipe,
+            kategori: "Utang-Piutang",
+            dompet: "Tunai",
+            jumlah: nominal,
+            keterangan: `[${formData.tipe}: ${formData.namaPihak}] ${formData.keterangan || ''}`,
+            createdAt: firebase.database.ServerValue.TIMESTAMP
+          });
+        } else if (funcName === 'simpanGoal') {
+          await rtdb.ref('users/' + currentUser.uid + '/goals').push({
+            namaGoal: formData.namaGoal,
+            targetNominal: Number(formData.targetNominal) || 0,
+            createdAt: firebase.database.ServerValue.TIMESTAMP
+          });
+        }
+
+        showNotification("Data berhasil disimpan ke Realtime Database!");
+        formEl.reset();
+        resetCurrencyPreviews();
+        formEl.querySelectorAll('input[type="date"]').forEach(i => i.value = today);
+
+        applyFilter();
+        loadRiwayat();
+        loadCalendar();
+      } catch (err) {
+        console.error("Gagal simpan ke Realtime DB:", err);
+        showNotification("Gagal menyimpan data!", true);
+      }
+    }
+
+    async function applyFilter() {
+      if (!currentUser) return;
+      let monthVal = document.getElementById('filterMonth').value;
+      if (!monthVal) return;
+
+      let parts = monthVal.split('-');
+      let year = parseInt(parts[0], 10);
+      let month = parseInt(parts[1], 10);
+
+      calYear = year;
+      calMonth = month;
+      loadCalendar();
+
+      let lastDayNum = new Date(year, month, 0).getDate();
+      let startStr = `${year}-${String(month).padStart(2, '0')}-01`;
+      let endStr = `${year}-${String(month).padStart(2, '0')}-${String(lastDayNum).padStart(2, '0')}`;
+
+      try {
+        const snap = await rtdb.ref('users/' + currentUser.uid + '/transaksi').once('value');
+
+        let totalPemasukan = 0;
+        let totalPengeluaran = 0;
+        let katMap = {};
+        let dompetMap = {};
+
+        snap.forEach(child => {
+          const data = child.val();
+          const dom = data.dompet || 'Tunai';
+          const amt = Number(data.jumlah) || 0;
+
+          if (!dompetMap[dom]) dompetMap[dom] = 0;
+          if (data.tipe === 'Pemasukan') dompetMap[dom] += amt;
+          else if (data.tipe === 'Pengeluaran') dompetMap[dom] -= amt;
+
+          if (data.tanggal >= startStr && data.tanggal <= endStr) {
+            if (data.tipe === 'Pemasukan') {
+              totalPemasukan += amt;
+            } else if (data.tipe === 'Pengeluaran') {
+              totalPengeluaran += amt;
+              const kat = data.kategori || 'Lainnya';
+              katMap[kat] = (katMap[kat] || 0) + amt;
+            }
+          }
+        });
+
+        const fmt = (num) => "Rp " + Number(num).toLocaleString('id-ID');
+        document.getElementById('dashSaldo').innerText = fmt(totalPemasukan - totalPengeluaran);
+        document.getElementById('dashPemasukan').innerText = fmt(totalPemasukan);
+        document.getElementById('dashPengeluaran').innerText = fmt(totalPengeluaran);
+
+        renderCharts({
+          pemasukan: totalPemasukan,
+          pengeluaran: totalPengeluaran,
+          katLabels: Object.keys(katMap),
+          katValues: Object.values(katMap)
+        });
+
+        renderDompetBalances(dompetMap);
+
+      } catch (e) {
+        console.error("Gagal applyFilter Realtime DB:", e);
+      }
+    }
+
+    async function loadRiwayat() {
+      if (!currentUser) return;
+      try {
+        const snap = await rtdb.ref('users/' + currentUser.uid + '/transaksi').once('value');
+        let list = [];
+        snap.forEach(child => {
+          list.push({ id: child.key, ...child.val() });
+        });
+        list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        if (list.length > 15) list = list.slice(0, 15);
+        renderRiwayatList(list);
+      } catch (e) {
+        console.error("Gagal loadRiwayat Realtime DB:", e);
+      }
+    }
+
+    async function loadCalendar() {
+      if (!currentUser) return;
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+      document.getElementById('calMonthYearTitle').innerText = `${monthNames[calMonth-1]} ${calYear}`;
+
+      let lastDayNum = new Date(calYear, calMonth, 0).getDate();
+      let startStr = `${calYear}-${String(calMonth).padStart(2, '0')}-01`;
+      let endStr = `${calYear}-${String(calMonth).padStart(2, '0')}-${String(lastDayNum).padStart(2, '0')}`;
+
+      try {
+        const snap = await rtdb.ref('users/' + currentUser.uid + '/transaksi').once('value');
+        let res = {};
+        snap.forEach(child => {
+          const d = child.val();
+          if (d.tanggal >= startStr && d.tanggal <= endStr) {
+            const dayNum = parseInt(d.tanggal.split('-')[2], 10);
+            if (!res[dayNum]) res[dayNum] = { in: 0, out: 0, list: [] };
+            const amt = Number(d.jumlah) || 0;
+            if (d.tipe === 'Pemasukan') res[dayNum].in += amt;
+            else res[dayNum].out += amt;
+            res[dayNum].list.push({ id: child.key, ...d });
+          }
+        });
+
+        calendarCache = res;
+        renderCalendarGrid(res);
+      } catch (e) {
+        console.error("Gagal loadCalendar Realtime DB:", e);
+      }
+    }
+
+    async function confirmHapusTransaksi(txId, nama, jumlah) {
+      if (!confirm(`Hapus transaksi "${nama}" sebesar ${jumlah}?`)) return;
+      if (!currentUser) return;
+
+      try {
+        await rtdb.ref('users/' + currentUser.uid + '/transaksi/' + txId).remove();
+        showNotification("Transaksi berhasil dihapus!");
+        applyFilter();
+        loadRiwayat();
+        loadCalendar();
+      } catch (e) {
+        console.error("Gagal hapus transaksi:", e);
+        showNotification("Gagal menghapus transaksi!", true);
+      }
+    }
+
+    /* UI & RENDER HELPERS */
     function openModalTambahTx() {
       const today = new Date().toISOString().split('T')[0];
       const form = document.getElementById('formTx');
-      if (form) {
-        form.querySelectorAll('input[type="date"]').forEach(i => i.value = today);
-      }
+      if (form) form.querySelectorAll('input[type="date"]').forEach(i => i.value = today);
       renderKategoriOptions();
       if (bsModalTx) bsModalTx.show();
     }
@@ -957,116 +1288,6 @@
       if (bsModalTx) bsModalTx.hide();
     }
 
-    async function checkSavedSession() {
-      const savedUser = localStorage.getItem('dompetku_user');
-      if (savedUser) {
-        document.getElementById('displayUsername').innerText = savedUser;
-        document.getElementById('authContainer').style.display = 'none';
-        document.querySelectorAll('.app-component').forEach(el => el.style.display = 'flex');
-        document.querySelector('.main-container').style.display = 'block';
-        
-        // 1. Render data lokal dari cache seketika (0 ms)
-        populateDropdowns();
-        renderCalendarGrid(getCache('dompetku_cache_cal') || {});
-        
-        const cachedDash = getCache('dompetku_cache_dash');
-        if (cachedDash) {
-          const fmt = (num) => "Rp " + Number(num).toLocaleString('id-ID');
-          document.getElementById('dashSaldo').innerText = fmt(cachedDash.saldo || 0);
-          document.getElementById('dashPemasukan').innerText = fmt(cachedDash.pemasukan || 0);
-          document.getElementById('dashPengeluaran').innerText = fmt(cachedDash.pengeluaran || 0);
-          renderCharts(cachedDash);
-        } else {
-          renderCalendarGrid({});
-        }
-
-        const cachedRiwayat = getCache('dompetku_cache_riwayat');
-        if (cachedRiwayat) {
-          renderRiwayatList(cachedRiwayat);
-        }
-
-        // 2. Lakukan sinkronisasi ke server secara background tanpa memblokir UI
-        loadMaster();
-        applyFilter();
-        loadRiwayat();
-        loadCalendar();
-      }
-    }
-
-    function setCache(key, value) {
-      try { localStorage.setItem(key, JSON.stringify(value)); } catch(e){}
-    }
-
-    function getCache(key) {
-      try {
-        const item = localStorage.getItem(key);
-        return item ? JSON.parse(item) : null;
-      } catch(e) { return null; }
-    }
-
-    /* FULLSCREEN TOGGLE HELPER */
-    function toggleFullScreen() {
-      if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
-        if (document.documentElement.requestFullscreen) {
-          document.documentElement.requestFullscreen();
-        } else if (document.documentElement.msRequestFullscreen) {
-          document.documentElement.msRequestFullscreen();
-        } else if (document.documentElement.mozRequestFullScreen) {
-          document.documentElement.mozRequestFullScreen();
-        } else if (document.documentElement.webkitRequestFullscreen) {
-          document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-        }
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        } else if (document.msExitFullscreen) {
-          document.msExitFullscreen();
-        } else if (document.mozCancelFullScreen) {
-          document.mozCancelFullScreen();
-        } else if (document.webkitExitFullscreen) {
-          document.webkitExitFullscreen();
-        }
-      }
-    }
-
-    /* THEME SWITCHER LOGIC (DARK MODE) */
-    function toggleTheme() {
-      const currentTheme = document.documentElement.getAttribute('data-bs-theme');
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-bs-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
-      updateThemeIcon();
-
-      // Refresh Charts to adjust font/grid colors in Dark Mode
-      if (calendarCache && Object.keys(calendarCache).length > 0) {
-        applyFilter();
-      }
-    }
-
-    function updateThemeIcon() {
-      const currentTheme = document.documentElement.getAttribute('data-bs-theme');
-      const icon = document.getElementById('themeIcon');
-      if (currentTheme === 'dark') {
-        icon.className = 'bi bi-sun-fill text-warning';
-      } else {
-        icon.className = 'bi bi-moon-stars-fill text-primary';
-      }
-    }
-
-    /* CURRENCY PREVIEW HELPER */
-    function updateCurrencyPreview(input, previewId) {
-      const val = parseFloat(input.value);
-      const prevEl = document.getElementById(previewId);
-      if (prevEl) {
-        if (!isNaN(val) && val > 0) {
-          prevEl.innerText = "Rp " + Number(val).toLocaleString('id-ID');
-        } else {
-          prevEl.innerText = "Rp 0";
-        }
-      }
-    }
-
-    /* AUTHENTICATION LOGIC */
     function toggleAuthMode(isRegister) {
       isRegisterMode = isRegister;
       const title = document.getElementById('authTitle');
@@ -1079,7 +1300,7 @@
 
       if (isRegister) {
         title.innerText = 'Daftar Akun Baru';
-        subtitle.innerText = 'Buat akun untuk mengelola keuangan Anda';
+        subtitle.innerText = 'Buat akun Firebase untuk mengelola keuangan Anda';
         btn.innerText = 'Daftar';
         toggleText.innerHTML = 'Sudah punya akun? <button type="button" class="btn btn-link p-0 text-primary fw-bold text-decoration-none shadow-none border-0 align-baseline" onclick="toggleAuthMode(false)">Login di sini</button>';
       } else {
@@ -1090,69 +1311,6 @@
       }
     }
 
-    async function handleAuthSubmit(e) {
-      if (e && e.preventDefault) e.preventDefault();
-      const user = document.getElementById('authUsername').value.trim();
-      const pass = document.getElementById('authPassword').value;
-      const btn = document.getElementById('btnAuthSubmit');
-      const alertBox = document.getElementById('authAlert');
-
-      if (!user || !pass) {
-        showAlert('authAlert', 'danger', '⚠️ Username dan Password wajib diisi.');
-        return false;
-      }
-
-      btn.disabled = true;
-      btn.innerText = 'Memproses...';
-      alertBox.classList.add('d-none');
-
-      try {
-        const action = isRegisterMode ? 'registerUser' : 'checkLogin';
-        const res = await callBackend(action, { username: user, password: pass });
-
-        btn.disabled = false;
-        btn.innerText = isRegisterMode ? 'Daftar' : 'Masuk';
-
-        if (res && (res.success || res.status === 'success')) {
-          showAlert('authAlert', 'success', res.message || '✅ Berhasil!');
-          
-          if (!isRegisterMode) {
-            document.getElementById('displayUsername').innerText = user;
-            if (document.getElementById('authRemember').checked) {
-              localStorage.setItem('dompetku_user', user);
-            } else {
-              localStorage.removeItem('dompetku_user');
-            }
-            
-            setTimeout(() => {
-              document.getElementById('authContainer').style.display = 'none';
-              document.querySelectorAll('.app-component').forEach(el => el.style.display = 'flex');
-              document.querySelector('.main-container').style.display = 'block';
-              
-              loadMaster();
-              applyFilter();
-              loadRiwayat();
-              loadCalendar();
-            }, 600);
-          } else {
-            setTimeout(() => {
-              toggleAuthMode(false);
-              showAlert('authAlert', 'success', '✅ Pendaftaran berhasil! Silakan klik tombol Masuk.');
-            }, 1000);
-          }
-        } else if (res && res.message) {
-          showAlert('authAlert', 'danger', res.message);
-        } else {
-          showAlert('authAlert', 'danger', '⚠️ Response dari server tidak valid.');
-        }
-      } catch (err) {
-        btn.disabled = false;
-        btn.innerText = isRegisterMode ? 'Daftar' : 'Masuk';
-        showAlert('authAlert', 'danger', '⚠️ Gagal terhubung ke server login. Periksa koneksi internet.');
-      }
-      return false;
-    }
-
     function showAlert(elementId, type, message) {
       const el = document.getElementById(elementId);
       el.className = `alert alert-${type} small text-center rounded-3`;
@@ -1160,16 +1318,6 @@
       el.classList.remove('d-none');
     }
 
-    function logout() {
-      localStorage.removeItem('dompetku_user');
-      document.getElementById('authForm').reset();
-      document.getElementById('authContainer').style.display = 'flex';
-      document.querySelectorAll('.app-component').forEach(el => el.style.display = 'none');
-      toggleAuthMode(false);
-      showNotification('Berhasil keluar dari akun.');
-    }
-
-    /* MAIN APP FUNCTIONS */
     function showNotification(msg, isError = false) {
       const toastEl = document.getElementById('liveToast');
       document.getElementById('toastMessage').innerText = msg;
@@ -1198,10 +1346,9 @@
             el.innerHTML += `<option value="${d}" ${isSel}>${d}</option>`;
           });
         }
-        if (currentVal && el.querySelector(`option[value="${currentVal}"]`)) {
-          el.value = currentVal;
-        }
+        if (currentVal && el.querySelector(`option[value="${currentVal}"]`)) el.value = currentVal;
       });
+
       const sp = document.getElementById('spProduk');
       if(sp && dbMaster && dbMaster.produk) {
         const currentVal = sp.value;
@@ -1210,9 +1357,7 @@
           const isSel = (p === currentVal) ? 'selected' : '';
           sp.innerHTML += `<option value="${p}" ${isSel}>${p}</option>`;
         });
-        if (currentVal && sp.querySelector(`option[value="${currentVal}"]`)) {
-          sp.value = currentVal;
-        }
+        if (currentVal && sp.querySelector(`option[value="${currentVal}"]`)) sp.value = currentVal;
       }
     }
 
@@ -1227,65 +1372,37 @@
       
       const currentSelectedKat = katEl.value;
       katEl.innerHTML = '<option value="">-- Pilih Kategori --</option>';
-      
-      if (!dbMaster) {
-        dbMaster = {
-          pemasukan: ['Gaji', 'Bonus', 'Investasi', 'Lainnya'],
-          kebutuhan: ['Makan/Minum', 'Belanja Bulanan', 'Listrik/Air', 'Transportasi', 'Kesehatan'],
-          keinginan: ['Hiburan', 'Hobi', 'Jalan-jalan', 'Shopping'],
-          dompet: ['Tunai', 'BCA', 'Mandiri', 'GoPay', 'OVO', 'Dana'],
-          produk: ['Produk A', 'Jasa Service', 'Reseller Item']
-        };
-      }
 
       let list = [];
       if (tipe === 'Pemasukan') {
         if (boxJenis) boxJenis.style.display = 'none';
-        if (jenisEl) {
-          jenisEl.disabled = true;
-          jenisEl.removeAttribute('required');
-        }
-        list = dbMaster.pemasukan || dbMaster.Pemasukan || [];
+        if (jenisEl) { jenisEl.disabled = true; jenisEl.removeAttribute('required'); }
+        list = dbMaster.pemasukan || [];
       } else {
         if (boxJenis) boxJenis.style.display = 'block';
-        if (jenisEl) {
-          jenisEl.disabled = false;
-          jenisEl.setAttribute('required', 'required');
-        }
+        if (jenisEl) { jenisEl.disabled = false; jenisEl.setAttribute('required', 'required'); }
         const jenis = (jenisEl ? jenisEl.value : 'Kebutuhan').toLowerCase();
-        
-        if (jenis.includes('kebutuhan')) {
-          list = dbMaster.kebutuhan || dbMaster.Kebutuhan || [];
-        } else {
-          list = dbMaster.keinginan || dbMaster.Keinginan || [];
-        }
+        list = jenis.includes('kebutuhan') ? (dbMaster.kebutuhan || []) : (dbMaster.keinginan || []);
       }
 
-      let matchFound = false;
       list.forEach(k => {
         if (k && k.toString().trim() !== "") {
           const itemStr = k.toString().trim();
           const isSel = (itemStr === currentSelectedKat) ? 'selected' : '';
-          if (isSel) matchFound = true;
           katEl.innerHTML += `<option value="${itemStr}" ${isSel}>${itemStr}</option>`;
         }
       });
-
-      if (matchFound && currentSelectedKat) {
+      if (currentSelectedKat && katEl.querySelector(`option[value="${currentSelectedKat}"]`)) {
         katEl.value = currentSelectedKat;
-      } else {
-        katEl.value = "";
       }
     }
 
     function renderCharts(data) {
       if (!data) return;
       const currentTheme = document.documentElement.getAttribute('data-bs-theme');
-      const isDark = currentTheme === 'dark';
-      const textColor = isDark ? '#f8f9fa' : '#212529';
-      const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+      const textColor = currentTheme === 'dark' ? '#f8f9fa' : '#212529';
+      const gridColor = currentTheme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
 
-      // 1. Chart Donut Arus Kas (Pemasukan vs Pengeluaran)
       const ctxDonut = document.getElementById('chartDonut');
       if (ctxDonut) {
         if (chartDonutInstance) chartDonutInstance.destroy();
@@ -1303,16 +1420,12 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-              legend: {
-                position: 'bottom',
-                labels: { color: textColor, font: { family: 'Plus Jakarta Sans', weight: '600' } }
-              }
+              legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Plus Jakarta Sans', weight: '600' } } }
             }
           }
         });
       }
 
-      // 2. Chart Bar Kategori Pengeluaran
       const ctxKat = document.getElementById('chartKategori');
       if (ctxKat) {
         if (chartKategoriInstance) chartKategoriInstance.destroy();
@@ -1334,18 +1447,10 @@
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-              x: {
-                ticks: { color: textColor, font: { family: 'Plus Jakarta Sans' } },
-                grid: { display: false }
-              },
-              y: {
-                ticks: { color: textColor, font: { family: 'Plus Jakarta Sans' } },
-                grid: { color: gridColor }
-              }
+              x: { ticks: { color: textColor, font: { family: 'Plus Jakarta Sans' } }, grid: { display: false } },
+              y: { ticks: { color: textColor, font: { family: 'Plus Jakarta Sans' } }, grid: { color: gridColor } }
             },
-            plugins: {
-              legend: { display: false }
-            }
+            plugins: { legend: { display: false } }
           }
         });
       }
@@ -1355,7 +1460,7 @@
       const container = document.getElementById('dompetBalanceContainer');
       if (!container) return;
       
-      let dompetList = (dbMaster && dbMaster.dompet) ? dbMaster.dompet : ["Tunai", "BCA", "Mandiri", "GoPay", "OVO", "Dana"];
+      let dompetList = (dbMaster && dbMaster.dompet) ? dbMaster.dompet : ["Tunai", "BCA", "Mandiri", "GoPay"];
       if (!balances) balances = {};
 
       let html = '';
@@ -1368,14 +1473,11 @@
         const dLower = d.toLowerCase();
 
         if (dLower.includes('cash') || dLower.includes('tunai') || dLower.includes('dompet') || dLower.includes('kas')) {
-          icon = "bi-cash-stack";
-          iconBg = "bg-success-subtle text-success";
+          icon = "bi-cash-stack"; iconBg = "bg-success-subtle text-success";
         } else if (dLower.includes('bca') || dLower.includes('mandiri') || dLower.includes('bni') || dLower.includes('bri') || dLower.includes('bank')) {
-          icon = "bi-bank";
-          iconBg = "bg-primary-subtle text-primary";
-        } else if (dLower.includes('gopay') || dLower.includes('ovo') || dLower.includes('dana') || dLower.includes('shopee') || dLower.includes('linkaja')) {
-          icon = "bi-phone";
-          iconBg = "bg-info-subtle text-info";
+          icon = "bi-bank"; iconBg = "bg-primary-subtle text-primary";
+        } else if (dLower.includes('gopay') || dLower.includes('ovo') || dLower.includes('dana') || dLower.includes('shopee')) {
+          icon = "bi-phone"; iconBg = "bg-info-subtle text-info";
         }
 
         html += `
@@ -1392,57 +1494,7 @@
           </div>
         `;
       });
-
       container.innerHTML = html;
-    }
-
-    async function applyFilter() {
-      let monthVal = document.getElementById('filterMonth').value;
-      if (!monthVal) return;
-
-      let parts = monthVal.split('-');
-      let year = parseInt(parts[0], 10);
-      let month = parseInt(parts[1], 10);
-
-      calYear = year;
-      calMonth = month;
-      loadCalendar();
-
-      let lastDayNum = new Date(year, month, 0).getDate();
-
-      let start = `${year}-${String(month).padStart(2, '0')}-01`;
-      let end = `${year}-${String(month).padStart(2, '0')}-${String(lastDayNum).padStart(2, '0')}`;
-
-      try {
-        const data = await callBackend('getDashboardData', { startDateStr: start, endDateStr: end });
-        if (data) {
-          setCache('dompetku_cache_dash', data);
-          const fmt = (num) => "Rp " + Number(num).toLocaleString('id-ID');
-          document.getElementById('dashSaldo').innerText = fmt(data.saldo || 0);
-          document.getElementById('dashPemasukan').innerText = fmt(data.pemasukan || 0);
-          document.getElementById('dashPengeluaran').innerText = fmt(data.pengeluaran || 0);
-          renderCharts(data);
-          renderDompetBalances(data.dompetBalances);
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    }
-
-    async function loadCalendar() {
-      const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
-      document.getElementById('calMonthYearTitle').innerText = `${monthNames[calMonth-1]} ${calYear}`;
-      
-      try {
-        const data = await callBackend('getCalendarData', { year: calYear, month: calMonth });
-        if (data) {
-          calendarCache = data;
-          setCache('dompetku_cache_cal', data);
-          renderCalendarGrid(calendarCache);
-        }
-      } catch (e) {
-        console.error("Error loadCalendar:", e);
-      }
     }
 
     function renderCalendarGrid(data) {
@@ -1459,7 +1511,7 @@
       let isCurrentMonth = (todayDate.getFullYear() === calYear && (todayDate.getMonth()+1) === calMonth);
 
       for (let d = 1; d <= daysInMonth; d++) {
-        let dayData = data[d] || data[String(d)] || { in: 0, out: 0, list: [] };
+        let dayData = data[d] || { in: 0, out: 0, list: [] };
         let isToday = isCurrentMonth && (todayDate.getDate() === d) ? 'today' : '';
         let strIn = (dayData.in && dayData.in > 0) ? `<div class="cal-amt cal-in">+${shortNum(dayData.in)}</div>` : '';
         let strOut = (dayData.out && dayData.out > 0) ? `<div class="cal-amt cal-out">-${shortNum(dayData.out)}</div>` : '';
@@ -1474,30 +1526,65 @@
       document.getElementById('calendarBody').innerHTML = html;
     }
 
-    async function loadRiwayat() {
-      try {
-        const data = await callBackend('getRiwayatTransaksi');
-        if (data) {
-          setCache('dompetku_cache_riwayat', data);
-          renderRiwayatList(data);
-        }
-      } catch (e) {
-        console.error(e);
+    function openDayDetail(dayNum) {
+      const dayData = calendarCache[dayNum] || { in: 0, out: 0, list: [] };
+      const title = document.getElementById('calDetailTitle');
+      const body = document.getElementById('calDetailBody');
+      title.innerText = `Rincian Transaksi: ${dayNum} / ${calMonth} / ${calYear}`;
+
+      if (!dayData.list || dayData.list.length === 0) {
+        body.innerHTML = '<div class="p-4 text-center text-secondary">Tidak ada transaksi pada tanggal ini.</div>';
+      } else {
+        let html = '<div class="list-group list-group-flush">';
+        dayData.list.forEach(tx => {
+          const isMasuk = tx.tipe === 'Pemasukan';
+          const amtClass = isMasuk ? 'text-success' : 'text-danger';
+          const sign = isMasuk ? '+' : '-';
+          const fmtAmt = "Rp " + Number(tx.jumlah).toLocaleString('id-ID');
+          html += `
+            <div class="list-group-item p-3 d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-bold">${tx.kategori} <small class="text-secondary">(${tx.dompet})</small></div>
+                <div class="small text-secondary">${tx.keterangan || '-'}</div>
+              </div>
+              <div class="fw-bold ${amtClass}">${sign}${fmtAmt}</div>
+            </div>
+          `;
+        });
+        html += '</div>';
+        body.innerHTML = html;
       }
+      bsModalCal.show();
     }
 
-    async function loadMaster() {
-      try {
-        const data = await callBackend('getMasterData');
-        if (data) {
-          dbMaster = data;
-          populateDropdowns();
-        } else {
-          populateDropdowns();
-        }
-      } catch (e) {
-        populateDropdowns();
+    function renderRiwayatList(data) {
+      const listEl = document.getElementById('riwayatList');
+      listEl.innerHTML = '';
+      if (!data || data.length === 0) {
+        listEl.innerHTML = '<div class="text-center text-secondary py-4">Belum ada transaksi tersimpan.</div>';
+        return;
       }
+      data.forEach((tx) => {
+        const isMasuk = tx.tipe === 'Pemasukan';
+        const iconClass = isMasuk ? 'bi-arrow-down-left' : 'bi-arrow-up-right';
+        const amountClass = isMasuk ? 'masuk' : 'keluar';
+        const sign = isMasuk ? '+' : '-';
+        const fmtAmt = "Rp " + Number(tx.jumlah).toLocaleString('id-ID');
+
+        listEl.innerHTML += `
+          <div class="tx-item">
+            <div class="tx-icon ${amountClass}"><i class="bi ${iconClass}"></i></div>
+            <div class="tx-details">
+              <div class="tx-title">${tx.kategori}</div>
+              <div class="tx-date"><i class="bi bi-calendar3 me-1"></i> ${tx.tanggal} &bull; ${tx.dompet}</div>
+            </div>
+            <div class="tx-amount ${amountClass} me-2">${sign}${fmtAmt}</div>
+            <button class="btn btn-outline-danger btn-sm border-0 rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;" title="Hapus Transaksi" onclick="confirmHapusTransaksi('${tx.id}', '${tx.kategori}', '${fmtAmt}')">
+              <i class="bi bi-trash3-fill fs-6"></i>
+            </button>
+          </div>
+        `;
+      });
     }
 
     function openMasterModal(type) {
@@ -1517,114 +1604,6 @@
       bsModal.show();
     }
 
-    async function submitMasterBaru() {
-      const type = document.getElementById('modalTargetType').value;
-      const val = document.getElementById('modalInputText').value.trim();
-      const btn = document.getElementById('btnSimpanMaster');
-      if (!val) { showNotification("Nama item tidak boleh kosong!", true); return; }
-
-      let colType = type;
-      if (type === 'kategori') {
-        const tipe = document.getElementById('txTipe').value;
-        colType = (tipe === 'Pemasukan') ? 'pemasukan' : document.getElementById('txJenis').value.toLowerCase();
-      }
-
-      // 1. UPDATE LOKAL INSTAN (0 MS LATENCY)
-      if (!dbMaster[colType]) dbMaster[colType] = [];
-      if (!dbMaster[colType].includes(val)) dbMaster[colType].push(val);
-      populateDropdowns();
-      renderDompetBalances(getCache('dompetku_cache_dash') ? getCache('dompetku_cache_dash').dompetBalances : {});
-      try { bsModal.hide(); } catch(e){}
-      showNotification(`"${val}" berhasil ditambahkan!`);
-
-      // 2. PROSES SYNC GOOGLE SHEETS DI BACKGROUND
-      btn.disabled = true; btn.innerText = 'Simpan...';
-      callBackend('tambahMasterItem', { colType: colType, value: val }).then(res => {
-        btn.disabled = false; btn.innerText = 'Simpan';
-        loadMaster();
-      }).catch(err => {
-        btn.disabled = false; btn.innerText = 'Simpan';
-      });
-    }
-
-    async function submitForm(e, funcName, formEl) {
-      e.preventDefault();
-      if (!formEl.checkValidity()) { formEl.reportValidity(); return; }
-
-      const formData = {}; 
-      new FormData(formEl).forEach((val, key) => formData[key] = val);
-
-      const today = new Date().toISOString().split('T')[0];
-
-      // 1. UPDATE LOKAL INSTAN (0 MS LATENCY)
-      showNotification("Transaksi berhasil disimpan!");
-      formEl.reset();
-      resetCurrencyPreviews();
-      formEl.querySelectorAll('input[type="date"]').forEach(i => i.value = today);
-      populateDropdowns();
-
-      // Tambahkan item transaksi sementara ke daftar riwayat lokal secara instan
-      const newTx = {
-        id: 'TRX-' + Date.now(),
-        tanggal: formData.tanggal || today,
-        tipe: formData.tipe || 'Pengeluaran',
-        jenis: formData.jenis || '-',
-        kategori: formData.kategori || formData.produk || 'Umum',
-        dompet: formData.dompet || 'Kas',
-        jumlah: Number(formData.jumlah || formData.nominal || 0),
-        keterangan: formData.keterangan || '-'
-      };
-
-      let currentRiwayat = getCache('dompetku_cache_riwayat') || [];
-      currentRiwayat.unshift(newTx);
-      if (currentRiwayat.length > 15) currentRiwayat = currentRiwayat.slice(0, 15);
-      setCache('dompetku_cache_riwayat', currentRiwayat);
-      renderRiwayatList(currentRiwayat);
-
-      // 2. KIRIM DATA KE GOOGLE SHEETS SECARA ASYNCHRONOUS DI BACKGROUND
-      callBackend(funcName, formData).then(res => {
-        if (res && res.status === 'success') {
-          applyFilter();
-          loadRiwayat();
-          loadCalendar();
-        }
-      }).catch(err => {
-        console.warn("Background sync delay:", err);
-      });
-    }
-
-    function renderRiwayatList(data) {
-      const listEl = document.getElementById('riwayatList');
-      listEl.innerHTML = '';
-      if (!data || data.length === 0) {
-        listEl.innerHTML = '<div class="text-center text-secondary py-4">Belum ada transaksi tersimpan.</div>';
-        return;
-      }
-      data.forEach((tx, idx) => {
-        const isMasuk = tx.tipe === 'Pemasukan';
-        const iconClass = isMasuk ? 'bi-arrow-down-left' : 'bi-arrow-up-right';
-        const amountClass = isMasuk ? 'masuk' : 'keluar';
-        const sign = isMasuk ? '+' : '-';
-        const fmtAmt = "Rp " + Number(tx.jumlah).toLocaleString('id-ID');
-        const txId = tx.id || idx;
-
-        listEl.innerHTML += `
-          <div class="tx-item">
-            <div class="tx-icon ${amountClass}"><i class="bi ${iconClass}"></i></div>
-            <div class="tx-details">
-              <div class="tx-title">${tx.kategori}</div>
-              <div class="tx-date"><i class="bi bi-calendar3 me-1"></i> ${tx.tanggal} &bull; ${tx.dompet}</div>
-            </div>
-            <div class="tx-amount ${amountClass} me-2">${sign}${fmtAmt}</div>
-            <button class="btn btn-outline-danger btn-sm border-0 rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;" title="Hapus Transaksi" onclick="confirmHapusTransaksi('${txId}', '${tx.kategori}', '${fmtAmt}')">
-              <i class="bi bi-trash3-fill fs-6"></i>
-            </button>
-          </div>
-        `;
-      });
-    }
-
-    /* KELOLA & HAPUS MASTER DATA */
     function openKelolaMasterModal(type) {
       document.getElementById('modalKelolaTargetType').value = type;
       let colType = type;
@@ -1657,55 +1636,49 @@
       });
     }
 
-    async function hapusMasterItemProcess(colType, val) {
-      if (!confirm(`Apakah Anda yakin ingin menghapus "${val}" dari master ${colType}?`)) return;
-
-      // 1. UPDATE LOKAL INSTAN (0 MS LATENCY)
-      if (dbMaster[colType]) {
-        dbMaster[colType] = dbMaster[colType].filter(i => i !== val);
-      }
-      populateDropdowns();
-      renderKelolaMasterList(colType);
-      renderDompetBalances(getCache('dompetku_cache_dash') ? getCache('dompetku_cache_dash').dompetBalances : {});
-      showNotification(`"${val}" berhasil dihapus!`);
-
-      // 2. PROSES SYNC GOOGLE SHEETS DI BACKGROUND
-      callBackend('hapusMasterItem', { colType: colType, val: val }).then(res => {
-        loadMaster();
-      }).catch(err => {
-        console.warn("Hapus master sync warning:", err);
-      });
-    }
-
-    /* HAPUS TRANSAKSI INSTAN (0 MS LATENCY) */
-    async function confirmHapusTransaksi(txId, nama, jumlah) {
-      if (!confirm(`Hapus transaksi "${nama}" sebesar ${jumlah}?`)) return;
-
-      // 1. UPDATE LOKAL INSTAN (0 MS LATENCY)
-      let currentRiwayat = getCache('dompetku_cache_riwayat') || [];
-      currentRiwayat = currentRiwayat.filter(tx => (tx.id || '').toString() !== txId.toString());
-      setCache('dompetku_cache_riwayat', currentRiwayat);
-      renderRiwayatList(currentRiwayat);
-
-      showNotification("Transaksi berhasil dihapus!");
-      try { if (bsModalCal) bsModalCal.hide(); } catch(e){}
-
-      // 2. PROSES HAPUS DI GOOGLE SHEETS SECARA ASYNCHRONOUS DI BACKGROUND
-      callBackend('hapusTransaksi', { txId: txId }).then(res => {
-        if (res && res.status === 'success') {
-          applyFilter();
-          loadRiwayat();
-          loadCalendar();
-        }
-      }).catch(err => {
-        console.warn("Background deletion sync delay:", err);
-      });
-    }
-
-    function loadLocalDummyData() {
+    function changeMonth(delta) {
+      calMonth += delta;
+      if (calMonth > 12) { calMonth = 1; calYear++; }
+      else if (calMonth < 1) { calMonth = 12; calYear--; }
+      document.getElementById('filterMonth').value = `${calYear}-${String(calMonth).padStart(2, '0')}`;
       applyFilter();
-      loadCalendar();
-      loadRiwayat();
+    }
+
+    function updateCurrencyPreview(input, previewId) {
+      const val = parseFloat(input.value);
+      const prevEl = document.getElementById(previewId);
+      if (prevEl) {
+        prevEl.innerText = (!isNaN(val) && val > 0) ? "Rp " + Number(val).toLocaleString('id-ID') : "Rp 0";
+      }
+    }
+
+    function resetCurrencyPreviews() {
+      document.querySelectorAll('.currency-preview').forEach(el => el.innerText = 'Rp 0');
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => console.log(err));
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-bs-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      updateThemeIcon();
+      applyFilter();
+    }
+
+    function updateThemeIcon() {
+      const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+      const icon = document.getElementById('themeIcon');
+      if (icon) {
+        icon.className = currentTheme === 'dark' ? 'bi bi-sun-fill text-warning' : 'bi bi-moon-stars-fill text-primary';
+      }
     }
   </script>
 </body>
