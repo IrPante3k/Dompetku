@@ -1609,30 +1609,29 @@
       }
     }
 
-    /* HAPUS TRANSAKSI */
+    /* HAPUS TRANSAKSI INSTAN (0 MS LATENCY) */
     async function confirmHapusTransaksi(txId, nama, jumlah) {
       if (!confirm(`Hapus transaksi "${nama}" sebesar ${jumlah}?`)) return;
 
-      try {
-        const res = await callBackend('hapusTransaksi', { txId: txId });
+      // 1. UPDATE LOKAL INSTAN (0 MS LATENCY)
+      let currentRiwayat = getCache('dompetku_cache_riwayat') || [];
+      currentRiwayat = currentRiwayat.filter(tx => (tx.id || '').toString() !== txId.toString());
+      setCache('dompetku_cache_riwayat', currentRiwayat);
+      renderRiwayatList(currentRiwayat);
+
+      showNotification("Transaksi berhasil dihapus!");
+      try { if (bsModalCal) bsModalCal.hide(); } catch(e){}
+
+      // 2. PROSES HAPUS DI GOOGLE SHEETS SECARA ASYNCHRONOUS DI BACKGROUND
+      callBackend('hapusTransaksi', { txId: txId }).then(res => {
         if (res && res.status === 'success') {
-          showNotification(res.message);
-          bsModalCal.hide();
-          applyFilter();
-          loadRiwayat();
-          loadCalendar();
-        } else if (res) {
-          showNotification(res.message || 'Gagal menghapus transaksi.', true);
-        } else {
-          showNotification(`Transaksi "${nama}" berhasil dihapus (Lokal).`);
-          bsModalCal.hide();
           applyFilter();
           loadRiwayat();
           loadCalendar();
         }
-      } catch (err) {
-        showNotification('Gagal terhubung saat menghapus transaksi.', true);
-      }
+      }).catch(err => {
+        console.warn("Background deletion sync delay:", err);
+      });
     }
 
     function loadLocalDummyData() {
